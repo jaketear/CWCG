@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QPaintEvent, QPainterPath
 from PyQt5.QtWidgets import QFrame
 
-import data_collector
+from data_models import data_collector
 
 
 class AircraftFuelBankWidget(QFrame):

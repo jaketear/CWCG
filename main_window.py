@@ -2,16 +2,19 @@
 
 import sys
 import re
+import os
 
 from PyQt5.QtCore import Qt, QRect, QSize
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-                             QGraphicsView, QToolButton, QSpacerItem, QSizePolicy, QGroupBox,
-                             QTabWidget, QMenuBar, QMenu, QAction)
+                             QToolButton, QSpacerItem, QSizePolicy, QGroupBox,
+                             QTabWidget, QMenuBar, QMenu, QAction, QMessageBox, QFileDialog)
 
 from widgets.aircraft_fuel_bank_sketch import AircraftFuelBankWidget
-from widgets.menu_bar import MenuBar
+# from widgets.menu_bar import MenuBar
 from widgets.weigh_dialog import WeighDialog
+from widgets.fuel_consumption_canvas import FuelConsumptionCanvas
+from data_models import config_info, data_collector
 
 
 class MainWindow(QMainWindow):
@@ -27,8 +30,8 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget(self)
         self.verticalLayout_2 = QVBoxLayout(self.central_widget)
         self.horizontalLayout_2 = QHBoxLayout()
-        self.graphicsView = QGraphicsView(self.central_widget)
-        self.horizontalLayout_2.addWidget(self.graphicsView)
+        self.fuel_consumption_canvas = FuelConsumptionCanvas(self.central_widget)
+        self.horizontalLayout_2.addWidget(self.fuel_consumption_canvas)
         self.widget = QWidget(self.central_widget)
         self.verticalLayout = QVBoxLayout(self.widget)
         self.horizontalLayout = QHBoxLayout()
@@ -56,7 +59,7 @@ class MainWindow(QMainWindow):
         self.widget_4 = QWidget(self.tab_trim_load)
         self.verticalLayout_5.addWidget(self.widget_4)
         self.tabWidget.addTab(self.tab_trim_load, "")
-        self.tab_fuel = QWidget()
+        self.tab_fuel = AircraftFuelBankWidget()
         self.verticalLayout_6 = QVBoxLayout(self.tab_fuel)
         self.widget_5 = QWidget(self.tab_fuel)
         self.verticalLayout_6.addWidget(self.widget_5)
@@ -113,11 +116,24 @@ class MainWindow(QMainWindow):
 
         self.btn_dow.clicked.connect(self.show_weigh_dialog)
 
+        self.action_save_case.triggered.connect(self.save_case)
+
+    # 保存算例
+    def save_case(self):
+        tag_path = config_info.default_weigh_info_export_dir + os.sep + 'untitled.json'
+        case_path, name = QFileDialog.getSaveFileName(self, '保存算例', tag_path, '算例文件 (*.json)')
+        if case_path:
+            data_collector.export_weight_info_to_json(case_path)
+            # 如果路径改变就对配置信息进行修改保存
+            if os.path.dirname(case_path) != config_info.default_weigh_info_export_dir:
+                config_info.set_config_info(default_weigh_info_export_dir=os.path.dirname(case_path))
+            QMessageBox.information(self, '保存算例',  '保存算例成功！')
+
     def show_weigh_dialog(self):
         self.weigh_dialog.show()
 
     def translate(self):
-        self.setWindowTitle("配载设计")
+        self.setWindowTitle(config_info.soft_name)
         self.btn_dow.setText("空机数据")
         self.gb_general_info.setTitle("基本信息")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_pay_load), "使用项目")
