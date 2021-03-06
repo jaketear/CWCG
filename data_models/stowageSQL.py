@@ -12,6 +12,8 @@ class sql_information():
         cursor = connection.cursor()
         query_data = None
         try:
+            # cursor.execute('pragma table_info([cg_correction])')
+            # print(cursor.fetchall())
             cursor.execute(sql)
             query_data = cursor.fetchall()
         except Exception as e:

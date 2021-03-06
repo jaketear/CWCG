@@ -32,7 +32,7 @@ class CG():
     def calculate_absence_unit(self):
         self.Ws = 0
         moment = 0
-        for unit in data_collector.weigh_info['redundant_unit']:
+        for unit in data_collector.weigh_info['absence_unit']:
             weight = unit[1]
             arm = unit[2]
             self.Ws += weight
@@ -85,6 +85,8 @@ class CG():
     ##计算飞机实测相对重心
     def calculate_Xp_(self):
         self.calculate_pillar()
+        # 更新俯仰角
+        self.alpha = data_collector.weigh_info['pitch_angle']
         Xm=22323+self.actual_arm['Lm']*math.tan(5.912*math.pi/180)
         Xn=8918-self.actual_arm['Ln']*math.tan(1.9*math.pi/180)
         if self.Wr:
@@ -97,26 +99,29 @@ class CG():
     ##计算重心修正量
     def caclulate_detaCG(self):
         sql=sql_information()
-        gravity = sql.query_data(
-            'SELECT pitch_angle,deta_CG FROM cg_correction')
+        gravity = sql.query_data('select ' + '\ufeff' + 'pitch_angle, deta_CG from cg_correction')
         # 查询成功
         if gravity:
             l=len(gravity)
-            list = []
+            pitch_list = []
             for i in range(l):
-                list.append(gravity[i][0])
-            boundary = self.search(list, self.alpha)
+                pitch_list.append(gravity[i][0])
+            boundary = self.search(pitch_list, self.alpha)
+            if isinstance(boundary, int):
+                result = gravity[boundary][1]
+            elif isinstance(boundary, list):
+                x = [gravity[boundary[0]][0],gravity[boundary[1]][0]]
+                y = [gravity[boundary[0]][1],gravity[boundary[1]][1]]
 
-            x = [gravity[boundary[0]][0],gravity[boundary[1]][0]]
-            y = [gravity[boundary[0]][1],gravity[boundary[1]][1]]
-
-            f = interpolate.interp1d(x, y, kind='linear')
-            result = f(self.alpha)
-
+                f = interpolate.interp1d(x, y, kind='linear')
+                result = f(self.alpha)
+            else:
+                print('超出修正范围！')
+                result = 0
             return result
         # 查询失败
         else:
-            print('查询失败')
+            print('查询失败！')
             return 0
 
     ##计算试验空机重量

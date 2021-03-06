@@ -14,16 +14,41 @@ with open(config_file_path, 'r') as config_file_obj:
 
 # 软件名称
 soft_name = config_parser.get('general', 'soft_name')
+
 # 称重信息导出文件的默认路径
-if config_parser.get('general', 'default_weigh_info_export_dir') == '.':
-    default_weigh_info_export_dir = current_dir
-else:
-    default_weigh_info_export_dir = config_parser.get('general', 'default_weigh_info_export_dir')
+default_weigh_info_export_dir = config_parser.get('general', 'default_weigh_info_export_dir')
 # 称重信息导入文件的默认路径
-if config_parser.get('general', 'default_weigh_info_import_dir') == '.':
-    default_weigh_info_import_dir = current_dir
-else:
-    default_weigh_info_import_dir = config_parser.get('general', 'default_weigh_info_import_dir')
+default_weigh_info_import_dir = config_parser.get('general', 'default_weigh_info_import_dir')
+
+# 图标
+icon_main_window = config_parser.get('icon_path', 'icon_main_window')
+icon_arrow_close = config_parser.get('icon_path', 'icon_arrow_close')
+icon_arrow_open = config_parser.get('icon_path', 'icon_arrow_open')
+
+# 微软雅黑字体路径
+font_dir = current_dir + os.sep + 'data\\msyh.ttf'
+
+# ui样式
+# 通用提示字体大小
+general_tip_font_size = int(config_parser.get('ui_style', 'general_tip_font_size'))
+# 树控件中项的大小
+tree_review_item_height = int(config_parser.get('ui_style', 'tree_review_item_height'))
+
+# 树控件样式
+tree_view_style = 'QTreeView { font-family: \'Microsoft YaHei UI\';' +\
+                  'font-size: %dpx;' % general_tip_font_size +\
+                  'color: white; background-color: transparent; border: none}' \
+                  'QHeaderView::section {color: white; background-color: #3A3E5B;' +\
+                  'font-size: %dpx; height: %dpx;' % (general_tip_font_size, tree_review_item_height) +\
+                  'font-weight: bold; border: none}' + \
+                  'QTreeView::item { height: %dpx; background-color: #009688}' % tree_review_item_height +\
+                  'QTreeView::branch {background-color: #009688}' \
+                  'QTreeView::branch:open:has-children:!has-siblings,' \
+                  'QTreeView::branch:open:has-children:has-siblings' +\
+                  '{image: url(\'%s\');}' % icon_arrow_open +\
+                  'QTreeView::branch:has-children:!has-siblings:closed,' \
+                  'QTreeView::branch:closed:has-children:has-siblings' \
+                  '{image: url(\'%s\');}' % icon_arrow_close
 
 
 # 设置配置信息

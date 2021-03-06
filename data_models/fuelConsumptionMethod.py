@@ -17,7 +17,8 @@ class FuleConsumption():
     def fuel_display_deviation(self, fuel_display, position):
         sql = sql_information()
         fuel = sql.query_data(
-            'SELECT fuel_display,actual_fuel FROM fuel_display_deviation where wing_fuel_tank="' + position + '"')
+            'SELECT fuel_display,actual_fuel FROM fuel_display_deviation where ' + \
+            '\ufeff' + 'wing_fuel_tank="' + position + '"')
 
         l = len(fuel)
         list = []
@@ -39,7 +40,7 @@ class FuleConsumption():
     def fuel_and_arm(self, actual_fuel, position):
         sql = sql_information()
         fuel = sql.query_data(
-            'SELECT actual_fuel,balance_arm FROM fuel_and_arm where ﻿wing_fuel_tank="' + position + '"')
+            'SELECT actual_fuel,balance_arm FROM fuel_and_arm where ' + '\ufeff' + 'wing_fuel_tank="' + position + '"')
 
         l = len(fuel)
         list = []

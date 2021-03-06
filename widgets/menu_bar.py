@@ -2,15 +2,17 @@
 
 import math
 
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt, QRect, pyqtSignal
 from PyQt5.QtGui import (QPainter, QPaintEvent, QPainterPath, QFont,
-                         QMouseEvent)
+                         QMouseEvent, QBrush, QColor)
 from PyQt5.QtWidgets import QFrame
 
 
 class MenuBar(QFrame):
-    def __init__(self, parent=None, menu_items: list = None, height: int = 32,
-                 arrow_angle: int = 60, arrow_space: int = 6, font_margin: int = 2):
+    signal_selected_item_change = pyqtSignal(int)
+
+    def __init__(self, parent=None, height: int = 40, arrow_angle: int = 60,
+                 arrow_space: int = 12, font_margin: int = 6):
         super().__init__(parent)
 
         self.setMaximumHeight(height)
@@ -18,7 +20,7 @@ class MenuBar(QFrame):
 
         # 菜单栏的各项目名称
         # self.menu_items_list = menu_items
-        self.menu_items_list = ['动作', '动作', '动作']
+        self.menu_items_list = ['机型', '称重', '配载', '项目', '燃油', '报告']
 
         # 箭头的角度属性
         self.arrow_angle = arrow_angle
@@ -29,11 +31,16 @@ class MenuBar(QFrame):
         # 箭头的路径
         self.arrows_path = list()
 
+        # 箭头选中的颜色
+        self.selected_brush = QBrush(QColor('#3F51B5'))
+        # self.un_selected_brush = Qt.gray
+        self.un_selected_brush = QBrush(QColor('#9FA8DA'))
+
         # 文字距离边界距离
         self.font_margin = font_margin
 
         # 当前选择的项目
-        self.current_select_index = -1
+        self.current_select_index = 0
 
     # 计算箭头轮廓
     def cal_arrows_patch(self, hei, arrow_wid, delta_wid):
@@ -79,6 +86,7 @@ class MenuBar(QFrame):
             for i, ap in enumerate(self.arrows_path):
                 if ap.contains(event.localPos()):
                     self.current_select_index = i
+                    self.signal_selected_item_change.emit(self.current_select_index)
                     self.update()
                     break
             event.accept()
@@ -88,7 +96,7 @@ class MenuBar(QFrame):
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
         painter.setPen(Qt.NoPen)
-        painter.setBrush(Qt.gray)
+        painter.setBrush(self.un_selected_brush)
 
         # 计算特征参数
         wid = self.width()
@@ -100,22 +108,23 @@ class MenuBar(QFrame):
         self.cal_arrows_patch(hei, arrow_wid, delta_wid)
         for i, ap in enumerate(self.arrows_path):
             if i == self.current_select_index:
-                painter.setBrush(Qt.yellow)
+                painter.setBrush(self.selected_brush)
                 painter.drawPath(ap)
-                painter.setBrush(Qt.gray)
+                painter.setBrush(self.un_selected_brush)
             else:
                 painter.drawPath(ap)
         painter.setPen(Qt.white)
         font = QFont()
         font.setFamily('微软雅黑')
-        font.setPixelSize(hei - 4)
+        font.setBold(True)
+        font.setPixelSize(hei - self.font_margin * 2 - 2)
         painter.setFont(font)
         # 增加文字
         for i, text in enumerate(self.menu_items_list):
             pos_x = delta_wid + (arrow_wid + self.arrow_space) * i
             pos_y = self.font_margin
             t_wid = arrow_wid - delta_wid
-            t_hei = hei - self.font_margin * 2
+            t_hei = hei - self.font_margin * 2 - 2
             # painter.drawRect(QRect(pos_x, pos_y, t_wid, t_hei))
             painter.drawText(QRect(pos_x, pos_y, t_wid, t_hei), Qt.AlignCenter,
                              text)
