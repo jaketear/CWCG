@@ -10,12 +10,12 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QToolButton, QSpacerItem, QSizePolicy, QGroupBox,
                              QTabWidget, QMenuBar, QMenu, QAction, QMessageBox, QFileDialog)
 
-from widgets.aircraft_fuel_tank import AircraftFuelTankWidget
+from widgets.aircraft_fuel_tank_widget import AircraftFuelTankWidget
 from widgets.weigh_widget import AircraftSketch
 # from widgets.menu_bar import MenuBar
 from widgets.custom_dialog import WeighDialog
 from widgets.custom_tree_view_widget import UnitInfoList
-from widgets.fuel_consumption_canvas import FuelConsumptionCanvas
+from widgets.custom_canvas import FuelConsumptionCanvas
 from data_models import config_info, data_collector
 
 

@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QMenu, QAction, QDial
 
 from widgets.custom_dialog import UnitEditDialog
 from data_models import config_info
-from widgets.custom_tree_view_model import TreeModelBase
+from widgets.custom_tree_view_model import WeightInfoTreeModel, MatrixDataTreeModel, MultiMatrixTreeModel
 from data_models.data_collector import aircraft_weight_info
 
 
@@ -94,6 +94,7 @@ class UnitInfoList(QTreeWidget):
         menu.exec_(self.mapToGlobal(pos))
 
 
+# 显示重量信息的树控件
 class WeightInfoTree(QTreeView):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -120,6 +121,64 @@ class WeightInfoTree(QTreeView):
         QTreeView.drawRow(self, painter, opt, index)
 
     def display_weight_info(self):
-        self.tree_model = TreeModelBase(aircraft_weight_info, self,
-                                        header=['项目', '重量(kg)', '力臂(mm)', '力矩(kg*mm)', '重心'])
+        self.tree_model = WeightInfoTreeModel(aircraft_weight_info, self,
+                                              header=['项目', '重量(kg)', '力臂(mm)', '力矩(kg*mm)', '重心'])
+        self.setModel(self.tree_model)
+
+
+# 显示两个变量对应关系的树控件
+class MatrixDataTree(QTreeView):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.tree_model = None
+
+        self.setSelectionMode(QAbstractItemView.NoSelection)
+
+        # 不显示箭头
+        self.setRootIsDecorated(False)
+        # 设置表头
+        self.header().setSectionResizeMode(QHeaderView.Stretch)
+        self.header().setDefaultAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        # 设置样式
+        self.setStyleSheet(config_info.tree_view_style)
+        # self.setAlternatingRowColors(True)
+
+    # 重载绘制行的函数
+    def drawRow(self, painter: QPainter, options: QStyleOptionViewItem, index: QModelIndex):
+        opt = QStyleOptionViewItem(options)
+        opt.rect.adjust(0, 0, 0, -5)
+        QTreeView.drawRow(self, painter, opt, index)
+
+    def display_info(self, relation_dict, header_label_list):
+        self.tree_model = MatrixDataTreeModel(relation_dict, self, header=header_label_list)
+        self.setModel(self.tree_model)
+
+
+# 显示两个变量对应关系的树控件
+class MultiMatrixTree(QTreeView):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.tree_model = None
+
+        self.setSelectionMode(QAbstractItemView.NoSelection)
+
+        # 不显示箭头
+        # self.setRootIsDecorated(False)
+        # 设置表头
+        self.header().setSectionResizeMode(QHeaderView.Stretch)
+        self.header().setDefaultAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        # 设置样式
+        self.setStyleSheet(config_info.tree_view_style)
+        # self.setAlternatingRowColors(True)
+
+    # 重载绘制行的函数
+    def drawRow(self, painter: QPainter, options: QStyleOptionViewItem, index: QModelIndex):
+        opt = QStyleOptionViewItem(options)
+        opt.rect.adjust(0, 0, 0, -5)
+        QTreeView.drawRow(self, painter, opt, index)
+
+    def display_info(self, relation_dict, header_label_list):
+        self.tree_model = MultiMatrixTreeModel(relation_dict, self, header=header_label_list)
         self.setModel(self.tree_model)

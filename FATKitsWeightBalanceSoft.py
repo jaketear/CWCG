@@ -6,14 +6,15 @@ import re
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                             QStackedWidget, QHBoxLayout, QTreeView)
+                             QStackedWidget, QHBoxLayout)
 
 from data_models import config_info
 from widgets.menu_bar import MenuBar
-from widgets.fuel_consumption_canvas import FuelConsumptionCanvas
-from widgets.aircraft_fuel_tank import AircraftFuelTankWidget
+from widgets.custom_canvas import FuelConsumptionCanvas
+from widgets.aircraft_fuel_tank_widget import AircraftFuelTankWidget
 from widgets.weigh_widget import AircraftSketch
 from widgets.custom_tree_view_widget import WeightInfoTree
+from widgets.aircraft_info_widget import AircraftInfoWidget
 
 
 class MainWindow(QMainWindow):
@@ -35,7 +36,7 @@ class MainWindow(QMainWindow):
         self.verticalLayout_1 = QVBoxLayout(self.central_widget)
         self.work_flow_stacked_widget = QStackedWidget(self.central_widget)
         # 飞机信息
-        self.page_aircraft_info = QWidget()
+        self.page_aircraft_info = AircraftInfoWidget()
         self.work_flow_stacked_widget.addWidget(self.page_aircraft_info)
         # 称重
         self.page_weigh = AircraftSketch()
@@ -53,7 +54,8 @@ class MainWindow(QMainWindow):
         self.page_report = QWidget()
         self.work_flow_stacked_widget.addWidget(self.page_report)
         self.verticalLayout_1.addWidget(self.work_flow_stacked_widget)
-        self.horizontalLayout = QHBoxLayout()
+        self.show_result_info_widget = QWidget()
+        self.horizontalLayout = QHBoxLayout(self.show_result_info_widget)
         self.fuel_consumption_canvas = FuelConsumptionCanvas(self.central_widget)
         self.horizontalLayout.addWidget(self.fuel_consumption_canvas)
         self.weight_info = WeightInfoTree(self.central_widget)
@@ -61,7 +63,7 @@ class MainWindow(QMainWindow):
         self.horizontalLayout.addWidget(self.weight_info)
         self.horizontalLayout.setStretch(0, 1)
         self.horizontalLayout.setStretch(1, 1)
-        self.verticalLayout_1.addLayout(self.horizontalLayout)
+        self.verticalLayout_1.addWidget(self.show_result_info_widget)
         self.verticalLayout_1.setStretch(0, 1)
         self.verticalLayout_1.setStretch(1, 1)
         self.verticalLayout.addLayout(self.verticalLayout_1)
@@ -78,11 +80,13 @@ class MainWindow(QMainWindow):
     def change_work_flow_stack_widget(self, page_no):
         # 当选择机型和称重界面时不显示燃油消耗曲线和基本重量信息
         if page_no in [0, 1]:
-            self.weight_info.setHidden(True)
-            self.fuel_consumption_canvas.setHidden(True)
+            self.show_result_info_widget.setHidden(True)
+            # self.weight_info.setHidden(True)
+            # self.fuel_consumption_canvas.setHidden(True)
         else:
-            self.weight_info.setHidden(False)
-            self.fuel_consumption_canvas.setHidden(False)
+            self.show_result_info_widget.setHidden(False)
+            # self.weight_info.setHidden(False)
+            # self.fuel_consumption_canvas.setHidden(False)
         self.work_flow_stacked_widget.setCurrentIndex(page_no)
 
     def translate(self):

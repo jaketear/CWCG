@@ -6,6 +6,9 @@ import xlrd
 import json
 
 from data_models import config_info, CGmethod, ZFWmethod, fuelConsumptionMethod
+from data_models.aircraft import AircraftBaseClass
+
+aircraft = AircraftBaseClass()
 
 # 飞机重量重心相关数据
 # --特征数据--

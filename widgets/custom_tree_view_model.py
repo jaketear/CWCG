@@ -59,17 +59,12 @@ class TreeItemBase(object):
             self.item_data[column] = data
 
 
-# tree view模型
-class TreeModelBase(QAbstractItemModel):
+# 树模型的基类
+class BaseTreeModel(QAbstractItemModel):
 
     # column表示需要设置几列，header是表头名列表，若有表头名就按表头取列数
-    def __init__(self, data: dict, parent=None, column=2, header: list = None):
+    def __init__(self, data=None, parent=None, column=2, header: list = None):
         super().__init__(parent)
-
-        if isinstance(data, dict):
-            self.item_data = data
-        else:
-            self.item_data = dict()
 
         # 设置表头数据
         if header:
@@ -78,7 +73,7 @@ class TreeModelBase(QAbstractItemModel):
             self.root_data = [str(i + 1) for i in range(column)]
 
         self.root_item = TreeItemBase(self.root_data)
-        self.setup_model_data(self.item_data, self.root_item)
+        self.setup_model_data(data, self.root_item)
 
     def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -174,7 +169,21 @@ class TreeModelBase(QAbstractItemModel):
         return parent_item.child_count()
 
     @staticmethod
-    def setup_model_data(data: dict, root_item):
+    def setup_model_data(data, root_item):
+        raise ValueError('function: setup_model_data , must override.')
+
+
+# 重量信息树控件对应的模型
+class WeightInfoTreeModel(BaseTreeModel):
+
+    # column表示需要设置几列，header是表头名列表，若有表头名就按表头取列数
+    def __init__(self, data=None, parent=None, column=2, header: list = None):
+        super().__init__(data=data, parent=parent, column=2, header=header)
+
+    @staticmethod
+    def setup_model_data(data, root_item):
+        if not isinstance(data, dict):
+            data = dict()
         if 'major_aircraft_weight' in data:
             for weight_key, weight_value in data['major_aircraft_weight'].items():
                 if weight_key == 'operation_item' and 'operation_item' in data and data['operation_item']:
@@ -197,3 +206,62 @@ class TreeModelBase(QAbstractItemModel):
         # for data_item in data:
         #     data_list = [data for data in data_item]
         #     root_item.append_child(TreeItemBase(data_list, root_item))
+
+
+# 矩阵类型数据的模型，如{'test1': [1, 2], 'test2': [2, 3]}
+class MatrixDataTreeModel(BaseTreeModel):
+
+    # column表示需要设置几列，header是表头名列表，若有表头名就按表头取列数
+    def __init__(self, data=None, parent=None, column=2, header: list = None):
+        super().__init__(data=data, parent=parent, column=column, header=header)
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        if role != Qt.DisplayRole:
+            return None
+        item = index.internalPointer()
+        return item.data(index.column())
+
+    @staticmethod
+    def setup_model_data(data, root_item):
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if not isinstance(value, list):
+                    root_item.append_child(TreeItemBase([key, value], root_item))
+                else:
+                    value.insert(0, key)
+                    root_item.append_child(TreeItemBase(value, root_item))
+
+
+# 多个矩阵的模型，如{'test1': [[2, 3], [2, 3]], 'test2': [[2, 3], [2, 3]]}
+class MultiMatrixTreeModel(BaseTreeModel):
+
+    # column表示需要设置几列，header是表头名列表，若有表头名就按表头取列数
+    def __init__(self, data=None, parent=None, column=2, header: list = None):
+        super().__init__(data=data, parent=parent, column=column, header=header)
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        if role != Qt.DisplayRole:
+            return None
+        item = index.internalPointer()
+        return item.data(index.column())
+
+    def setup_model_data(self, data, root_item):
+        if not isinstance(data, dict):
+            data = dict()
+        if len(data) != 1:
+            col_count = self.columnCount()
+            for key, value in data.items():
+                null_data_list = ['' for i in range(col_count)]
+                null_data_list[0] = key
+                parent_item = TreeItemBase(null_data_list, root_item)
+                root_item.append_child(parent_item)
+                for item_weight_value in data[key]:
+                    parent_item.append_child(TreeItemBase(item_weight_value, parent_item))
+        else:
+            for key, value in data.items():
+                for item_weight_value in data[key]:
+                    root_item.append_child(TreeItemBase(item_weight_value, root_item))

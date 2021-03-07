@@ -114,3 +114,82 @@ class FuelConsumptionCanvas(FigureCanvas):
             self.adjust_fuel_change_range(fuel_consumption_sum, cg_real_time)
 
             self.draw()
+
+
+# 重量重心限制曲线
+class WeightCGLimitCanvas(FigureCanvas):
+    def __init__(self, parent=None):
+        self.figure_style_config()
+        self.fig = Figure(figsize=(5, 4))
+        # 初始化父类
+        FigureCanvas.__init__(self, self.fig)
+        self.setParent(parent)
+        self.toolbar = NavigationToolbar(self, parent=None)
+        self.toolbar.hide()
+
+    @staticmethod
+    # 画布样式配置
+    def figure_style_config():
+        # 画布的背景色和边框色
+        matplotlib.rcParams['figure.facecolor'] = 'white'
+        matplotlib.rcParams['figure.edgecolor'] = 'white'
+        # 坐标的背景色
+        matplotlib.rcParams['axes.facecolor'] = 'white'
+        # 坐标的边框色
+        matplotlib.rcParams['axes.edgecolor'] = 'black'
+        # 坐标的边框线宽
+        matplotlib.rcParams['axes.linewidth'] = 1.0
+        # 坐标文字的颜色
+        matplotlib.rcParams['axes.labelcolor'] = 'black'
+        # 设置标题颜色
+        # matplotlib.rcParams['axes.titlecolor'] = 'white'
+        # 设置曲线颜色
+        matplotlib.rcParams['axes.prop_cycle'] = cycler('color', ['blue', 'red', '#00FFFF'])
+        # 支持中文显示
+        # matplotlib.rcParams['font.sans-serif'] = ['SimHei']
+        matplotlib.rcParams['axes.unicode_minus'] = False
+        # 设置刻度线向内
+        matplotlib.rcParams['xtick.direction'] = 'in'
+        matplotlib.rcParams['ytick.direction'] = 'in'
+        # 设置刻度值颜色
+        matplotlib.rcParams['xtick.color'] = 'black'
+        matplotlib.rcParams['ytick.color'] = 'black'
+        # 字体默认颜色
+        matplotlib.rcParams['text.color'] = 'black'
+
+    def plot_curve(self):
+        self.fig.clf()
+        ax = self.fig.add_subplot(1, 1, 1)
+
+        line_list = list()
+        legend_list = list()
+        for limit_name in data_collector.aircraft.cg_limit:
+            cg_limit_info = data_collector.aircraft.cg_limit[limit_name]
+            cg_limit_info = zip(*cg_limit_info)
+            x, y = cg_limit_info
+            line, = ax.plot(x, y, lw=2)
+            line_list.append(line)
+            legend_list.append(limit_name)
+        # fuel_consumption_sum, cg_real_time = data_collector.get_fuel_consume_data()
+        #
+        # self.line_gear_down, = ax.plot(cg_real_time['LG_down'], fuel_consumption_sum["weight"], lw=2)
+        # self.line_gear_up, = ax.plot(cg_real_time['LG_up'], fuel_consumption_sum["weight"], lw=2)
+        #
+        ax.legend(line_list, legend_list,
+                  prop=ftm.FontProperties(fname=config_info.font_dir, size=15),
+                  frameon=False)
+        # ax.xaxis.set_major_formatter(PercentFormatter(xmax=1))
+        # ax.set_title(data_collector.aircraft.aircraft_type + '(' +
+        #              data_collector.aircraft.aircraft_id + ')飞机重量重心限制',
+        #              fontproperties=ftm.FontProperties(fname=config_info.font_dir, size=12))
+        ax.set_xlabel('重心(%MAC)', fontproperties=ftm.FontProperties(fname=config_info.font_dir, size=10))
+        ax.set_ylabel('重量(kg)', fontproperties=ftm.FontProperties(fname=config_info.font_dir, size=10))
+        ax.xaxis.set_minor_locator(AutoMinorLocator(n=5))
+        ax.yaxis.set_minor_locator(AutoMinorLocator(n=2))
+        ax.grid(which='major', linestyle='-', color='0.45')
+        ax.grid(which='minor', linestyle='-', color='0.75')
+
+        self.fig.subplots_adjust(left=0.18, bottom=0.1, right=0.95, top=0.95)
+
+        # ax.plot([0, 1], [0, 1])
+        # ax.plot([0, 1], [1, 0])

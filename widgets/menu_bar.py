@@ -7,12 +7,14 @@ from PyQt5.QtGui import (QPainter, QPaintEvent, QPainterPath, QFont,
                          QMouseEvent, QBrush, QColor)
 from PyQt5.QtWidgets import QFrame
 
+from data_models import config_info
+
 
 class MenuBar(QFrame):
     signal_selected_item_change = pyqtSignal(int)
 
     def __init__(self, parent=None, height: int = 40, arrow_angle: int = 60,
-                 arrow_space: int = 12, font_margin: int = 6):
+                 arrow_space: int = 12, font_margin: int = 6, shadow_deep: int = 4):
         super().__init__(parent)
 
         self.setMaximumHeight(height)
@@ -32,12 +34,17 @@ class MenuBar(QFrame):
         self.arrows_path = list()
 
         # 箭头选中的颜色
-        self.selected_brush = QBrush(QColor('#3F51B5'))
-        # self.un_selected_brush = Qt.gray
-        self.un_selected_brush = QBrush(QColor('#9FA8DA'))
+        self.selected_brush = QBrush(QColor(config_info.button_selected_color))
+        self.un_selected_brush = QBrush(QColor(config_info.button_un_selected_color))
+        # 箭头选中的阴影颜色
+        self.shadow_selected_brush = QBrush(QColor(config_info.button_selected_shadow_color))
+        self.shadow_un_selected_brush = QBrush(QColor(config_info.button_un_selected_shadow_color))
 
         # 文字距离边界距离
         self.font_margin = font_margin
+
+        # 阴影深度
+        self.shadow_deep = shadow_deep
 
         # 当前选择的项目
         self.current_select_index = 0
@@ -47,38 +54,57 @@ class MenuBar(QFrame):
         self.arrows_path = list()
 
         for i in range(self.arrow_count):
-            if i == 0:
-                chara_point_one = (0.0, 0.0)
-                chara_point_two = (arrow_wid, 0.0)
-                chara_point_three = (arrow_wid + delta_wid, hei / 2)
-                chara_point_four = (arrow_wid, hei)
-                chara_point_five = (0, hei)
-                arrow_path = QPainterPath()
-                arrow_path.moveTo(*chara_point_one)
-                arrow_path.lineTo(*chara_point_two)
-                arrow_path.lineTo(*chara_point_three)
-                arrow_path.lineTo(*chara_point_four)
-                arrow_path.lineTo(*chara_point_five)
-                arrow_path.lineTo(*chara_point_one)
-                arrow_path.closeSubpath()
-                self.arrows_path.append(arrow_path)
-            else:
-                chara_point_one = (arrow_wid * i + self.arrow_space * i, 0.0)
-                chara_point_two = (arrow_wid * (i + 1) + self.arrow_space * i, 0.0)
-                chara_point_three = (arrow_wid * (i + 1) + self.arrow_space * i + delta_wid, hei / 2)
-                chara_point_four = (arrow_wid * (i + 1) + self.arrow_space * i, hei)
-                chara_point_five = (arrow_wid * i + self.arrow_space * i, hei)
-                chara_point_six = (arrow_wid * i + self.arrow_space * i + delta_wid, hei / 2)
-                arrow_path = QPainterPath()
-                arrow_path.moveTo(*chara_point_one)
-                arrow_path.lineTo(*chara_point_two)
-                arrow_path.lineTo(*chara_point_three)
-                arrow_path.lineTo(*chara_point_four)
-                arrow_path.lineTo(*chara_point_five)
+            chara_point_one = (arrow_wid * i + self.arrow_space * i, 0.0)
+            chara_point_two = (arrow_wid * (i + 1) + self.arrow_space * i, 0.0)
+            chara_point_three = (arrow_wid * (i + 1) + self.arrow_space * i + delta_wid, hei / 2)
+            chara_point_four = (arrow_wid * (i + 1) + self.arrow_space * i, hei)
+            chara_point_five = (arrow_wid * i + self.arrow_space * i, hei)
+            chara_point_six = (arrow_wid * i + self.arrow_space * i + delta_wid, hei / 2)
+            arrow_path = QPainterPath()
+            arrow_path.moveTo(*chara_point_one)
+            arrow_path.lineTo(*chara_point_two)
+            arrow_path.lineTo(*chara_point_three)
+            arrow_path.lineTo(*chara_point_four)
+            arrow_path.lineTo(*chara_point_five)
+            if i != 0:
                 arrow_path.lineTo(*chara_point_six)
-                arrow_path.lineTo(*chara_point_one)
-                arrow_path.closeSubpath()
-                self.arrows_path.append(arrow_path)
+            arrow_path.lineTo(*chara_point_one)
+            arrow_path.closeSubpath()
+            self.arrows_path.append(arrow_path)
+
+    # 计算箭头阴影轮廓
+    def cal_arrow_shadow_path(self, hei, arrow_wid, delta_wid):
+        arrows_shadow_path = list()
+        for i in range(self.arrow_count):
+            # 计算第一部分阴影
+            chara_point_one = (arrow_wid * (i + 1) + self.arrow_space * i + delta_wid, hei / 2)
+            chara_point_two = (arrow_wid * (i + 1) + self.arrow_space * i + delta_wid, hei / 2 + self.shadow_deep)
+            chara_point_three = (arrow_wid * (i + 1) + self.arrow_space * i, hei + self.shadow_deep)
+            chara_point_four = (arrow_wid * i + self.arrow_space * i, hei + self.shadow_deep)
+            chara_point_five = (arrow_wid * i + self.arrow_space * i, hei)
+            chara_point_six = (arrow_wid * (i + 1) + self.arrow_space * i, hei)
+            arrow_shadow_path_1 = QPainterPath()
+            arrow_shadow_path_1.moveTo(*chara_point_one)
+            arrow_shadow_path_1.lineTo(*chara_point_two)
+            arrow_shadow_path_1.lineTo(*chara_point_three)
+            arrow_shadow_path_1.lineTo(*chara_point_four)
+            arrow_shadow_path_1.lineTo(*chara_point_five)
+            arrow_shadow_path_1.lineTo(*chara_point_six)
+            arrow_shadow_path_1.lineTo(*chara_point_one)
+            arrow_shadow_path_1.closeSubpath()
+            # 计算第二部分
+            chara_point_one = (arrow_wid * i + self.arrow_space * i, 0.0)
+            chara_point_two = (arrow_wid * i + self.arrow_space * i + delta_wid, hei / 2)
+            chara_point_three = (arrow_wid * i + self.arrow_space * i + delta_wid, hei / 2 + self.shadow_deep)
+            chara_point_four = (arrow_wid * i + self.arrow_space * i, self.shadow_deep)
+            arrow_shadow_path_2 = QPainterPath()
+            arrow_shadow_path_2.moveTo(*chara_point_one)
+            arrow_shadow_path_2.lineTo(*chara_point_two)
+            arrow_shadow_path_2.lineTo(*chara_point_three)
+            arrow_shadow_path_2.lineTo(*chara_point_four)
+            arrow_shadow_path_2.moveTo(*chara_point_one)
+            arrows_shadow_path.append([arrow_shadow_path_1, arrow_shadow_path_2])
+        return arrows_shadow_path
 
     # 重写鼠标单击事件
     def mousePressEvent(self, event: QMouseEvent):
@@ -100,18 +126,29 @@ class MenuBar(QFrame):
 
         # 计算特征参数
         wid = self.width()
-        hei = self.height()
+        hei = self.height() - self.shadow_deep
         delta_wid = int(hei / 2 * math.tan(self.arrow_angle * math.pi / 180))
         arrow_wid = int((wid - delta_wid - self.arrow_space * (self.arrow_count - 1)) / self.arrow_count)
 
+        # 绘制阴影
+        arrows_shadow_path = self.cal_arrow_shadow_path(hei, arrow_wid, delta_wid)
+        for i, ap in enumerate(arrows_shadow_path):
+            if i == self.current_select_index:
+                painter.setBrush(self.shadow_selected_brush)
+                painter.drawPath(ap[0])
+                painter.drawPath(ap[1])
+            else:
+                painter.setBrush(self.shadow_un_selected_brush)
+                painter.drawPath(ap[0])
+                painter.drawPath(ap[1])
         # 绘制箭头
         self.cal_arrows_patch(hei, arrow_wid, delta_wid)
         for i, ap in enumerate(self.arrows_path):
             if i == self.current_select_index:
                 painter.setBrush(self.selected_brush)
                 painter.drawPath(ap)
-                painter.setBrush(self.un_selected_brush)
             else:
+                painter.setBrush(self.un_selected_brush)
                 painter.drawPath(ap)
         painter.setPen(Qt.white)
         font = QFont()
