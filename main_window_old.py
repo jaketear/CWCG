@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QTabWidget, QMenuBar, QMenu, QAction, QMessageBox, QFileDialog)
 
 from widgets.aircraft_fuel_tank_widget import AircraftFuelTankWidget
-from widgets.weigh_widget import AircraftSketch
+from widgets.aircraft_weigh_widget import AircraftSketch
 # from widgets.menu_bar import MenuBar
 from widgets.custom_dialog import WeighDialog
 from widgets.custom_tree_view_widget import UnitInfoList

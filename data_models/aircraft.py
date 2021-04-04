@@ -2,6 +2,8 @@
 
 import configparser
 
+from data_models import config_info, CGmethod, ZFWmethod, fuelConsumptionMethod
+
 
 # 定义一个飞机基类
 class AircraftBaseClass(object):
@@ -60,23 +62,94 @@ class AircraftBaseClass(object):
         # --weigh_location-称重地点, weigh_date-称重时间, weigh_tyre-轮子承重,
         # --weigh_pillar-支柱行程, redundant_unit-多装件(列表型列表，[多装件名称, 重量, 力臂]),
         # --absence_unit-缺装件(列表型列表，[缺装件名称, 重量, 力臂])
-        weigh_info = dict(aircraft_type='', aircraft='', weigh_method='地磅称重法',
-                          weigh_location='', weigh_date='',
-                          weigh_tyre_nr=[0, 0], weigh_tyre_nl=[0, 0],
-                          weigh_tyre_lo=[0, 0], weigh_tyre_li=[0, 0],
-                          weigh_tyre_ri=[0, 0], weigh_tyre_ro=[0, 0],
-                          weigh_pillar_ln=0, weigh_pillar_lmr=0, weigh_pillar_lml=0,
-                          pitch_angle=0.0,
-                          redundant_unit=list(), absence_unit=list())
+        self.weigh_info = dict(aircraft_type='', aircraft='', weigh_method='地磅称重法',
+                               weigh_location='', weigh_date='',
+                               weigh_tyre_nr=[0, 0], weigh_tyre_nl=[0, 0],
+                               weigh_tyre_lo=[0, 0], weigh_tyre_li=[0, 0],
+                               weigh_tyre_ri=[0, 0], weigh_tyre_ro=[0, 0],
+                               weigh_pillar_ln=0, weigh_pillar_lmr=0, weigh_pillar_lml=0,
+                               pitch_angle=0.0,
+                               redundant_unit=list(), absence_unit=list())
 
         # ---配载和装载信息---
-        # --service_item-标准项目,operation_item-使用项目,load-配重(列表型列表，[名称, 重量, 力臂])
-        self.stowage_info = dict(service_item=list(), operation_item=list(), load=list())
+        # --operation_item-使用项目,load-配重(列表型列表，[名称, 重量, 力臂])
+        self.stowage_info = dict(operation_items=list(), loads=list())
 
         # ---燃油信息---
-        self.fuel_info = dict()
+        self.fuel_info = dict(left=2749.0, central=11804.0, right=2749.0,
+                              left_limit=3050.9, center_limit=11976.5, right_limit=3050.9)
+
+        # --称重计算对象--
+        self.weigh_data_calculate_object = CGmethod.CG()
+        # --零油重量重心计算方法--
+        # self.zero_fuel_status_calculate_object = ZFWmethod.ZFW()
+        # --燃油消耗曲线计算方法--
+        self.fuel_consumption_calculate_object = fuelConsumptionMethod.FuleConsumption()
 
         self.init_aircraft_by_file(r'D:\CWCG\C919_10106.ini')
+
+    # 计算空机重量及力矩
+    def calculate_zfw_and_moment(self):
+        item_weight = self.weigh_data_calculate_object.Wt
+        item_arm = self.weigh_data_calculate_object.Xt_ * self.mean_aero_chord / 100 + self.mac_front_distance
+        item_moment = self.weigh_data_calculate_object.Wt * item_arm
+        for item_key in self.stowage_info:
+            for unit in self.stowage_info[item_key]:
+                weight = unit[1]
+                arm = unit[2]
+                item_weight += weight
+                item_moment += weight * arm
+
+        return item_weight, item_moment
+
+    # 获取飞机基本信息
+    def get_aircraft_base_info(self):
+        base_info = dict()
+        base_info['飞机型号'] = self.aircraft_type
+        base_info['飞机编号'] = self.aircraft_id
+        for key, value in self.fuel_limit.items():
+            base_info[key] = str(value) + ' kg'
+        for key, value in self.weight_limit.items():
+            base_info[key] = str(value) + ' kg'
+        return base_info
+
+    # 获取飞机重量重心信息
+    def get_aircraft_weight_info(self):
+        # 飞机重量重心信息
+        aircraft_weight_info = dict(major_aircraft_weight=dict(test_empty_weight=['试验空机重量', 0, 0, 0, 0],
+                                                               operation_item=['使用项目', 0, 0, 0, 0],
+                                                               operation_empty_weight=['使用空机重量', 0, 0, 0, 0],
+                                                               stowage_item=['配载', 0, 0, 0, 0],
+                                                               zero_fuel_weight=['零油重量', 0, 0, 0, 0],
+                                                               fuel_item=['燃油', 0, 0, 0, 0],
+                                                               total_weight=['总重', 0, 0, 0, 0]),
+                                    operation_items=self.stowage_info['operation_items'],
+                                    stowage_items=list(),
+                                    fuel_items=list())
+        aircraft_weight_info['major_aircraft_weight']['test_empty_weight'] = ['试验空机重量',
+                                                                              46593, 20825.7, 970329720.4, 23.2]
+        aircraft_weight_info['major_aircraft_weight']['stowage_item'] = ['配载', 350, 29979, 10492650, 0]
+        aircraft_weight_info['major_aircraft_weight']['operation_item'] = ['使用项目', 753, 13954.4, 10507648, 0]
+        aircraft_weight_info['major_aircraft_weight']['operation_empty_weight'] = ['使用空机重量',
+                                                                                   47346, 20716.2, 980837368.9, 20.6]
+        aircraft_weight_info['major_aircraft_weight']['zero_fuel_weight'] = ['零油重量',
+                                                                             47696, 20784.2, 991330018.9, 22.2]
+        aircraft_weight_info['major_aircraft_weight']['total_weight'] = ['总重',
+                                                                         62696, 20709.2, 1298395711.7, 20.4]
+        return aircraft_weight_info
+
+    # 获取燃油消耗数据
+    def get_fuel_consume_data(self):
+        w, m = self.calculate_zfw_and_moment()
+        zero_fuel_weight = {"weight": w, "force": m}
+
+        temp_fuel_info = dict(left=self.fuel_info['left'],
+                              central=self.fuel_info['central'],
+                              right=self.fuel_info['right'])
+        fuel_consumption_sum = self.fuel_consumption_calculate_object.fuel_consumption_force_caculate(temp_fuel_info)
+        cg_real_time = self.fuel_consumption_calculate_object.fuel_consumption_CG_caculate(zero_fuel_weight,
+                                                                                           fuel_consumption_sum)
+        return fuel_consumption_sum, cg_real_time
 
     # 通过配置文件，初始化飞机信息
     def init_aircraft_by_file(self, aircraft_config_file_path):
@@ -135,16 +208,19 @@ class AircraftBaseClass(object):
             item_value = item_value[1:-1]
             self.major_stowage_data[item_name] = [float(item_value.split(',')[0]), float(item_value.split(',')[1])]
 
-    # 获取飞机基本信息
-    def get_aircraft_base_info(self):
-        base_info = dict()
-        base_info['飞机型号'] = self.aircraft_type
-        base_info['飞机编号'] = self.aircraft_id
-        for key, value in self.fuel_limit.items():
-            base_info[key] = str(value) + ' kg'
-        for key, value in self.weight_limit.items():
-            base_info[key] = str(value) + ' kg'
-        return base_info
+    # 添加使用项目
+    def operation_item_add(self, item_info):
+        self.stowage_info['operation_items'].append(item_info)
+
+    # 修改使用项目
+    def operation_item_edit(self, index, item_info):
+        if index < len(self.stowage_info['operation_items']):
+            self.stowage_info['operation_items'][index] = item_info
+
+    # 删除使用项目
+    def operation_item_del(self, index):
+        if index < len(self.stowage_info['operation_items']):
+            self.stowage_info['operation_items'].pop(index)
 
     @staticmethod
     # 将字符串型2*n数组转成数值型数组，类型如：'[[12,34],[56,78]]'
@@ -153,3 +229,17 @@ class AircraftBaseClass(object):
         two_dim_list_str = two_dim_list_str.split('],[')
         result_2d_list = [[float(item.split(',')[0]), float(item.split(',')[1])] for item in two_dim_list_str]
         return result_2d_list
+
+    # 设置称重信息
+    def set_weigh_info(self, **kwargs):
+        for k in kwargs:
+            if k in self.weigh_info:
+                if isinstance(kwargs[k], type(self.weigh_info[k])):
+                    self.weigh_info[k] = kwargs[k]
+
+    # 设置燃油信息
+    def set_fuel_info(self, **kwargs):
+        for k in kwargs:
+            if k in self.fuel_info:
+                if isinstance(kwargs[k], type(self.fuel_info[k])):
+                    self.fuel_info[k] = kwargs[k]

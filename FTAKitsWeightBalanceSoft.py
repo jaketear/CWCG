@@ -10,11 +10,12 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 
 from data_models import config_info
 from widgets.menu_bar import MenuBar
-from widgets.custom_canvas import FuelConsumptionCanvas
 from widgets.aircraft_fuel_tank_widget import AircraftFuelTankWidget
-from widgets.weigh_widget import AircraftSketch
-from widgets.custom_tree_view_widget import WeightInfoTree
+from widgets.aircraft_weigh_widget import AircraftWeighWidget
 from widgets.aircraft_info_widget import AircraftInfoWidget
+from widgets.aircraft_use_item import AircraftUseItemWidget
+from widgets.result_info_show_widget import ResultInfoShowWidget
+from widgets.aircraft_stowage import AircraftStowageWidget
 
 
 class MainWindow(QMainWindow):
@@ -39,13 +40,13 @@ class MainWindow(QMainWindow):
         self.page_aircraft_info = AircraftInfoWidget()
         self.work_flow_stacked_widget.addWidget(self.page_aircraft_info)
         # 称重
-        self.page_weigh = AircraftSketch()
+        self.page_weigh = AircraftWeighWidget()
         self.work_flow_stacked_widget.addWidget(self.page_weigh)
         # 配载
-        self.page_stowage = QWidget()
+        self.page_stowage = AircraftStowageWidget()
         self.work_flow_stacked_widget.addWidget(self.page_stowage)
         # 使用项目
-        self.page_use_item = QWidget()
+        self.page_use_item = AircraftUseItemWidget()
         self.work_flow_stacked_widget.addWidget(self.page_use_item)
         # 燃油
         self.page_fuel = AircraftFuelTankWidget()
@@ -54,15 +55,9 @@ class MainWindow(QMainWindow):
         self.page_report = QWidget()
         self.work_flow_stacked_widget.addWidget(self.page_report)
         self.verticalLayout_1.addWidget(self.work_flow_stacked_widget)
-        self.show_result_info_widget = QWidget()
-        self.horizontalLayout = QHBoxLayout(self.show_result_info_widget)
-        self.fuel_consumption_canvas = FuelConsumptionCanvas(self.central_widget)
-        self.horizontalLayout.addWidget(self.fuel_consumption_canvas)
-        self.weight_info = WeightInfoTree(self.central_widget)
-        # self.weight_info.display_weight_info([['test1', '1', 'test2', '2', '3'], ['test2', '2', 'test2', '2', '3']])
-        self.horizontalLayout.addWidget(self.weight_info)
-        self.horizontalLayout.setStretch(0, 1)
-        self.horizontalLayout.setStretch(1, 1)
+
+        self.show_result_info_widget = ResultInfoShowWidget()
+
         self.verticalLayout_1.addWidget(self.show_result_info_widget)
         self.verticalLayout_1.setStretch(0, 1)
         self.verticalLayout_1.setStretch(1, 1)

@@ -4,9 +4,9 @@ import os
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPixmap, QResizeEvent
-from PyQt5.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QToolButton, QTreeView,
+from PyQt5.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QToolButton,
                              QGraphicsView, QLabel, QComboBox, QSpacerItem, QSizePolicy,
-                             QGraphicsScene)
+                             QGraphicsScene, QFileDialog, QMessageBox)
 
 from data_models import config_info
 from data_models.data_collector import aircraft
@@ -117,6 +117,9 @@ class AircraftInfoWidget(QFrame):
 
         self.display_aircraft_info()
 
+        # 连接信号与槽
+        self.btn_import_aircraft_ini.clicked.connect(self.sel_aircraft_info_file)
+
     # 显示飞机信息
     def display_aircraft_info(self):
         weight_cg_limit_content = '飞机重量重心限制'
@@ -146,6 +149,13 @@ class AircraftInfoWidget(QFrame):
     def resizeEvent(self, event: QResizeEvent):
         self.display_aircraft_frame_pic()
         QFrame.resizeEvent(self, event)
+
+    # 选择飞机信息文件
+    def sel_aircraft_info_file(self):
+        filename, temp = QFileDialog.getOpenFileName(self, "选择飞机数据文件", ".\\", "数据文件(*.ini)")
+        if filename:
+            filename = os.path.normpath(filename)
+            # 处理文件
 
     def translate(self):
         self.btn_import_aircraft_ini.setText("选择机型")

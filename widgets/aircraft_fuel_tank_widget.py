@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
-from PyQt5.QtGui import QPainter, QPaintEvent, QPainterPath
+from PyQt5.QtGui import QPainter, QPaintEvent, QPainterPath, QFont
 from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QVBoxLayout, QLabel, QSpacerItem,
-                             QSizePolicy, QSlider, QDoubleSpinBox, QAbstractSpinBox)
+                             QSizePolicy, QSlider, QDoubleSpinBox, QAbstractSpinBox,
+                             QGroupBox)
 
-from data_models import data_collector
+from data_models import data_collector, config_info
 
 
 class AircraftFuelTankSketch(QFrame):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        font = QFont()
+        font.setFamily('微软雅黑')
+        self.setFont(font)
 
         # 油量百分比
         self.center_fuel_bank_weight_per = 0
@@ -182,6 +187,10 @@ class AircraftFuelTankControl(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        font = QFont()
+        font.setFamily('微软雅黑')
+        self.setFont(font)
+
         self.resize(719, 424)
         self.horizontalLayout_4 = QHBoxLayout(self)
         self.verticalLayout = QVBoxLayout()
@@ -330,10 +339,13 @@ class AircraftFuelTankControl(QFrame):
         self.label_right_tank.setText("右机翼油箱")
 
 
-class AircraftFuelTankWidget(QFrame):
+class AircraftFuelTankWidget(QGroupBox):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.setTitle('燃油设置')
+        self.setStyleSheet(config_info.group_box_style)
 
         self.h_layout = QHBoxLayout(self)
         self.fuel_tank_sketch = AircraftFuelTankSketch()

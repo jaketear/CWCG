@@ -82,6 +82,16 @@ label_style = 'QLabel { background-color: transparent;' +\
               'font-size: %dpx;' % general_tip_font_size +\
               'color: black; padding-left: 2px }'
 
+# 文本输入行样式
+line_edit_style = 'QLineEdit { background-color: #9E9E9E;' +\
+                  'max-height: %dpx; min-height: %dpx;' % (label_height, label_height) +\
+                  'font-family: \'Microsoft YaHei UI\';' \
+                  'font-weight: bold;' +\
+                  'font-size: %dpx;' % general_tip_font_size +\
+                  'color: white;' \
+                  'border: none;' \
+                  'border-radius: 4px }'
+
 # 数值显示标签样式
 display_value_label_style = 'QLabel { background-color: #9E9E9E;' +\
                             'min-height: %dpx; max-height: %dpx;' % (label_height, label_height) +\
@@ -110,6 +120,13 @@ combo_box_style = 'QAbstractItemView { background-color: white; }' \
                   'QComboBox::down-arrow { image: url(\'./icon/arrow.png\');'\
                   'height: 14px; width: 14px; }' \
                   'QComboBox:disabled { color: gray }'
+
+
+# groupbox风格
+group_box_style = 'QGroupBox { font-family: \'Microsoft YaHei UI\';' \
+                  'font-weight: bold;' +\
+                  'font-size: %dpx;' % general_tip_font_size +\
+                  'color: black; }'
 
 
 # 设置配置信息

@@ -32,7 +32,7 @@ class CG():
     def calculate_absence_unit(self):
         self.Ws = 0
         moment = 0
-        for unit in data_collector.weigh_info['absence_unit']:
+        for unit in data_collector.aircraft.weigh_info['absence_unit']:
             weight = unit[1]
             arm = unit[2]
             self.Ws += weight
@@ -44,7 +44,7 @@ class CG():
 
     # 计算支柱行程
     def calculate_pillar(self):
-        weigh_info = data_collector.weigh_info
+        weigh_info = data_collector.aircraft.weigh_info
         self.actual_arm['Ln'] = weigh_info['weigh_pillar_ln']
         self.actual_arm['Lm'] = (weigh_info['weigh_pillar_lmr'] + weigh_info['weigh_pillar_lml']) / 2.0
 
@@ -52,7 +52,7 @@ class CG():
     def calculate_redundant_unit(self):
         self.Wo = 0
         moment = 0
-        for unit in data_collector.weigh_info['redundant_unit']:
+        for unit in data_collector.aircraft.weigh_info['redundant_unit']:
             weight = unit[1]
             arm = unit[2]
             self.Wo += weight
@@ -64,7 +64,7 @@ class CG():
 
     # 计算各起落架的承重
     def calculate_tyre_weight(self):
-        weigh_info = data_collector.weigh_info
+        weigh_info = data_collector.aircraft.weigh_info
         wn_1 = weigh_info['weigh_tyre_nr'][0] + weigh_info['weigh_tyre_nl'][0]
         wml_1 = weigh_info['weigh_tyre_lo'][0] + weigh_info['weigh_tyre_li'][0]
         wmr_1 = weigh_info['weigh_tyre_ro'][0] + weigh_info['weigh_tyre_ri'][0]
@@ -86,7 +86,7 @@ class CG():
     def calculate_Xp_(self):
         self.calculate_pillar()
         # 更新俯仰角
-        self.alpha = data_collector.weigh_info['pitch_angle']
+        self.alpha = data_collector.aircraft.weigh_info['pitch_angle']
         Xm=22323+self.actual_arm['Lm']*math.tan(5.912*math.pi/180)
         Xn=8918-self.actual_arm['Ln']*math.tan(1.9*math.pi/180)
         if self.Wr:

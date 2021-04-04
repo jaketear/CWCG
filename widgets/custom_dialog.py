@@ -11,6 +11,68 @@ from PyQt5.QtWidgets import (QDialog, QGridLayout, QLabel, QAbstractSpinBox, QGr
 # from widgets.custom_tree_view_widget import UnitInfoList
 
 
+class WeighDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        font = QFont()
+        font.setFamily('微软雅黑')
+        self.setFont(font)
+        self.resize(317, 235)
+
+        self.verticalLayout = QVBoxLayout(self)
+        self.gridLayout = QGridLayout()
+        self.label_nl = QLabel(self)
+        self.gridLayout.addWidget(self.label_nl, 0, 0, 1, 1)
+        self.line_edit_nl = QLineEdit(self)
+        self.gridLayout.addWidget(self.line_edit_nl, 0, 1, 1, 1)
+        self.label_nr = QLabel(self)
+        self.gridLayout.addWidget(self.label_nr, 1, 0, 1, 1)
+        self.line_edit_nr = QLineEdit(self)
+        self.gridLayout.addWidget(self.line_edit_nr, 1, 1, 1, 1)
+        self.label_lo = QLabel(self)
+        self.gridLayout.addWidget(self.label_lo, 2, 0, 1, 1)
+        self.line_edit_lo = QLineEdit(self)
+        self.gridLayout.addWidget(self.line_edit_lo, 2, 1, 1, 1)
+        self.label_li = QLabel(self)
+        self.gridLayout.addWidget(self.label_li, 3, 0, 1, 1)
+        self.line_edit_li = QLineEdit(self)
+        self.gridLayout.addWidget(self.line_edit_li, 3, 1, 1, 1)
+        self.label_ri = QLabel(self)
+        self.gridLayout.addWidget(self.label_ri, 4, 0, 1, 1)
+        self.line_edit_ri = QLineEdit(self)
+        self.gridLayout.addWidget(self.line_edit_ri, 4, 1, 1, 1)
+        self.label_ro = QLabel(self)
+        self.gridLayout.addWidget(self.label_ro, 5, 0, 1, 1)
+        self.line_edit_ro = QLineEdit(self)
+        self.gridLayout.addWidget(self.line_edit_ro, 5, 1, 1, 1)
+        self.verticalLayout.addLayout(self.gridLayout)
+        self.horizontalLayout = QHBoxLayout()
+        spacer_item = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacer_item)
+        self.pushButton = QPushButton(self)
+        self.horizontalLayout.addWidget(self.pushButton)
+        self.pushButton_2 = QPushButton(self)
+        self.horizontalLayout.addWidget(self.pushButton_2)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+
+        self.translate()
+
+        self.pushButton.clicked.connect(self.accept)
+        self.pushButton_2.clicked.connect(self.reject)
+
+    def translate(self):
+        self.setWindowTitle("测量数据")
+        self.label_nl.setText("NL")
+        self.label_nr.setText("NR")
+        self.label_lo.setText("LO")
+        self.label_li.setText("LI")
+        self.label_ri.setText("RI")
+        self.label_ro.setText("RO")
+        self.pushButton.setText("确定")
+        self.pushButton_2.setText("取消")
+
+
 # 部件编辑对话框
 class UnitEditDialog(QDialog):
     def __init__(self, parent=None):

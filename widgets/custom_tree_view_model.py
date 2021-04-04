@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import re
-
 from PyQt5.QtCore import (Qt, QAbstractItemModel, QModelIndex)
 
 
@@ -111,7 +109,7 @@ class BaseTreeModel(QAbstractItemModel):
             return 0
         return QAbstractItemModel.flags(self, index)
 
-    def getItem(self, index):
+    def getItem(self, index: QModelIndex):
         if index.isValid():
             item = index.internalPointer()
             if item:
@@ -186,20 +184,20 @@ class WeightInfoTreeModel(BaseTreeModel):
             data = dict()
         if 'major_aircraft_weight' in data:
             for weight_key, weight_value in data['major_aircraft_weight'].items():
-                if weight_key == 'operation_item' and 'operation_item' in data and data['operation_item']:
+                if weight_key == 'operation_item' and 'operation_items' in data and data['operation_items']:
                     operation_item = TreeItemBase(weight_value, root_item)
                     root_item.append_child(operation_item)
                     for item_weight_value in data['operation_item']:
                         operation_item.append_child(TreeItemBase(item_weight_value, operation_item))
-                if weight_key == 'stowage_item' and 'stowage_item' in data and data['stowage_item']:
+                if weight_key == 'stowage_item' and 'stowage_items' in data and data['stowage_items']:
                     stowage_item = TreeItemBase(weight_value, root_item)
                     root_item.append_child(stowage_item)
                     for item_weight_value in data['stowage_item']:
                         stowage_item.append_child(TreeItemBase(item_weight_value, stowage_item))
-                if weight_key == 'fuel_item' and 'fuel_item' in data and data['fuel_item']:
+                if weight_key == 'fuel_item' and 'fuel_items' in data and data['fuel_items']:
                     fuel_item = TreeItemBase(weight_value, root_item)
                     root_item.append_child(fuel_item)
-                    for item_weight_value in data['fuel_item']:
+                    for item_weight_value in data['fuel_items']:
                         fuel_item.append_child(TreeItemBase(item_weight_value, fuel_item))
                 if weight_key in ['test_empty_weight', 'operation_empty_weight', 'zero_fuel_weight', 'total_weight']:
                     root_item.append_child(TreeItemBase(weight_value, root_item))
@@ -265,3 +263,30 @@ class MultiMatrixTreeModel(BaseTreeModel):
             for key, value in data.items():
                 for item_weight_value in data[key]:
                     root_item.append_child(TreeItemBase(item_weight_value, root_item))
+
+
+# 使用项目树模型
+class UseItemTreeModel(BaseTreeModel):
+
+    def __init__(self, data_list: list, parent=None):
+        super().__init__(data_list, parent, header=['使用项目', '重量(kg)', '力臂(mm)', '力矩(kg*mm)'])
+
+    # 让item可编辑
+    def flags(self, index):
+        return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
+
+    # 重载函数，让item可编辑
+    def setData(self, index, value, role=Qt.DisplayRole):
+        if index.isValid():
+            if role == Qt.DisplayRole:
+                item = index.internalPointer()
+                item.set_data(index.column(), value)
+                return True
+
+        return False
+
+    @staticmethod
+    def setup_model_data(data: list, root_item):
+        for data_item in data:
+            data_list = [data for data in data_item]
+            root_item.append_child(TreeItemBase(data_list, root_item))

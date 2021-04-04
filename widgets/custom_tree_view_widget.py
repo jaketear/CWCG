@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import Qt, QModelIndex
+from PyQt5.QtCore import Qt, QModelIndex, pyqtSignal
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QMenu, QAction, QDialog,
                              QMessageBox, QTreeView, QAbstractItemView, QHeaderView,
-                             QStyleOptionViewItem)
+                             QStyleOptionViewItem, QStyledItemDelegate, QLineEdit)
 
 from widgets.custom_dialog import UnitEditDialog
-from data_models import config_info
+from data_models import config_info, data_collector
 from widgets.custom_tree_view_model import WeightInfoTreeModel, MatrixDataTreeModel, MultiMatrixTreeModel
-from data_models.data_collector import aircraft_weight_info
 
 
 class UnitInfoList(QTreeWidget):
@@ -121,6 +120,7 @@ class WeightInfoTree(QTreeView):
         QTreeView.drawRow(self, painter, opt, index)
 
     def display_weight_info(self):
+        aircraft_weight_info = data_collector.aircraft.get_aircraft_weight_info()
         self.tree_model = WeightInfoTreeModel(aircraft_weight_info, self,
                                               header=['项目', '重量(kg)', '力臂(mm)', '力矩(kg*mm)', '重心'])
         self.setModel(self.tree_model)
@@ -182,3 +182,55 @@ class MultiMatrixTree(QTreeView):
     def display_info(self, relation_dict, header_label_list):
         self.tree_model = MultiMatrixTreeModel(relation_dict, self, header=header_label_list)
         self.setModel(self.tree_model)
+
+
+# 使用项目的树控件
+class UseItemTreeView(QTreeView):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # 设置单选
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        # 不显示箭头
+        self.setRootIsDecorated(False)
+        # 不显示表头
+        # self.header().setHidden(True)
+        self.header().setSectionResizeMode(QHeaderView.Stretch)
+        self.header().setDefaultAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        # 在纵向不出现滚动条，即完全显示内容
+        self.setStyleSheet(config_info.tree_view_style)
+        # self.setAlternatingRowColors(True)
+
+    # 重载绘制行的函数
+    def drawRow(self, painter: QPainter, options: QStyleOptionViewItem, index: QModelIndex):
+        opt = QStyleOptionViewItem(options)
+        opt.rect.adjust(0, 0, 0, -5)
+        QTreeView.drawRow(self, painter, opt, index)
+
+
+# 为使用项目树写一个编辑代理
+class UseItemTreeDelegate(QStyledItemDelegate):
+    signal_edit_finished = pyqtSignal(QModelIndex)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def createEditor(self, parent, option, index):
+        editor = QLineEdit(parent)
+        editor.setAlignment(Qt.AlignHCenter)
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.model().data(index)
+        editor.setText(value)
+
+    def setModelData(self, editor, model, index):
+        value = editor.text()
+        model.setData(index, value)
+        self.signal_edit_finished.emit(index)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor_rect = option.rect
+        editor_rect.setHeight(editor_rect.height() - 5)
+        editor.setGeometry(editor_rect)
