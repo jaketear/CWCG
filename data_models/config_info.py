@@ -7,6 +7,10 @@ import configparser
 current_dir = os.path.abspath('.')
 # 配置文件所在的路径
 config_file_path = current_dir + os.sep + 'data\\aircraft_stowage_soft_config.ini'
+# 登录界面背景图片
+login_pic_dir = current_dir + os.sep + 'icon\\login.png'
+# 飞机信息的存储路径
+current_aircraft_info_save_dir = current_dir + os.sep + 'data\\current_aircraft_info'
 # 加载软件配置文件
 with open(config_file_path, 'r') as config_file_obj:
     config_parser = configparser.ConfigParser()
@@ -25,6 +29,8 @@ icon_main_window = config_parser.get('icon_path', 'icon_main_window')
 icon_arrow_close = config_parser.get('icon_path', 'icon_arrow_close')
 icon_arrow_open = config_parser.get('icon_path', 'icon_arrow_open')
 icon_select_aircraft = config_parser.get('icon_path', 'icon_select_aircraft')
+icon_edit_aircraft_info = config_parser.get('icon_path', 'icon_edit_aircraft_info')
+icon_search_aircraft_info = config_parser.get('icon_path', 'icon_search_aircraft_info')
 
 # 微软雅黑字体路径
 font_dir = current_dir + os.sep + 'data\\msyh.ttf'
@@ -34,28 +40,36 @@ font_dir = current_dir + os.sep + 'data\\msyh.ttf'
 general_tip_font_size = int(config_parser.get('ui_style', 'general_tip_font_size'))
 # 树控件中项的大小
 tree_review_item_height = int(config_parser.get('ui_style', 'tree_review_item_height'))
-# 按钮选中的颜色
-button_selected_color = config_parser.get('ui_style', 'button_selected_color')
-# 按钮未选中的颜色
-button_un_selected_color = config_parser.get('ui_style', 'button_un_selected_color')
-# 按钮选中的阴影颜色
-button_selected_shadow_color = config_parser.get('ui_style', 'button_selected_shadow_color')
-# 按钮未选中的阴影颜色
-button_un_selected_shadow_color = config_parser.get('ui_style', 'button_un_selected_shadow_color')
+# 工具栏按钮选中的颜色
+menu_bar_button_selected_color = config_parser.get('ui_style', 'menu_bar_button_selected_color')
+# 工具栏按钮未选中的颜色
+menu_bar_button_un_selected_color = config_parser.get('ui_style', 'menu_bar_button_un_selected_color')
+# 工具栏按钮选中的阴影颜色
+menu_bar_button_selected_shadow_color = config_parser.get('ui_style', 'menu_bar_button_selected_shadow_color')
+# 工具栏按钮未选中的阴影颜色
+menu_bar_button_un_selected_shadow_color = config_parser.get('ui_style', 'menu_bar_button_un_selected_shadow_color')
+# 工具按钮背景颜色
+button_color = config_parser.get('ui_style', 'button_color')
+# 工具按钮悬浮和按下颜色
+button_hover_color = config_parser.get('ui_style', 'button_hover_color')
 # 工具按钮高度
 button_height = int(config_parser.get('ui_style', 'button_height'))
 # 工具按钮字体大小
 button_font_size = int(config_parser.get('ui_style', 'button_font_size'))
+# 工具按钮图标大小
+button_icon_size = int(config_parser.get('ui_style', 'button_icon_size'))
 # 标签的高度与宽度
 label_height = int(config_parser.get('ui_style', 'label_height'))
 label_width = int(config_parser.get('ui_style', 'label_width'))
+# 文本输入框背景颜色
+line_edit_color = config_parser.get('ui_style', 'line_edit_color')
 
 # 树控件样式
-tree_view_style = 'QTreeView { font-family: \'Microsoft YaHei UI\'; font-weight: bold;' +\
+tree_view_style = 'QTreeView { font-family: \'Microsoft YaHei UI\';' +\
                   'font-size: %dpx;' % general_tip_font_size +\
                   'color: white; background-color: transparent; border: none}' \
                   'QHeaderView::section {font-family: \'Microsoft YaHei UI\';' \
-                  'color: white; background-color: #3A3E5B; font-weight: bold; padding-left: 2px;' +\
+                  'color: white; background-color: #3A3E5B; padding-left: 2px;' +\
                   'font-size: %dpx; height: %dpx; border: none}' % (general_tip_font_size, tree_review_item_height) +\
                   'QTreeView::item { height: %dpx; background-color: #9E9E9E;}' % tree_review_item_height +\
                   'QTreeView::branch {background-color: #9E9E9E}' \
@@ -67,45 +81,40 @@ tree_view_style = 'QTreeView { font-family: \'Microsoft YaHei UI\'; font-weight:
                   '{image: url(\'%s\');}' % icon_arrow_close
 # 按钮风格
 button_style = 'QToolButton { max-height: %dpx; min-height: %dpx;' % (button_height, button_height) +\
-               'background-color: #4CAF50;'\
-               'border-radius: 6px;' \
-               'font-family: \'Microsoft YaHei UI\';' +\
+               'background-color: %s; border-radius: 6px; font-family: \'Microsoft YaHei UI\';' % button_color +\
                'font-size: %dpx;' % button_font_size +\
-               'font-weight: bold;'\
-               'color: white }'
+               'font-weight: bold; color: white }' \
+               'QToolButton:pressed {padding-left: 2px; padding-top: 2px}' +\
+               'QToolButton:hover {background-color: %s;}' % button_hover_color
+
+button_with_icon_style = 'QToolButton { max-height: %dpx; min-height: %dpx;' % (button_height, button_height) +\
+                         'max-width: %dpx; min-width: %dpx;' % (button_height, button_height) +\
+                         'background-color: %s;' % button_color +\
+                         ' border-radius: 6px; icon-size: %dpx}' % button_icon_size +\
+                         'QToolButton:pressed {padding-left: 2px; padding-top: 2px}' \
+                         'QToolButton:hover {background-color: %s;}' % button_hover_color
 
 # 标签样式
 label_style = 'QLabel { background-color: transparent;' +\
               'min-height: %dpx; max-height: %dpx;' % (label_height, label_height) +\
               'min-width: %dpx; max-width: %dpx;' % (label_width, label_width) +\
-              'font-family: \'Microsoft YaHei UI\';' +\
-              'font-size: %dpx;' % general_tip_font_size +\
-              'color: black; padding-left: 2px }'
+              'font-family: \'Microsoft YaHei UI\'; ' +\
+              'font-size: %dpx; color: black}' % general_tip_font_size
 
 # 文本输入行样式
-line_edit_style = 'QLineEdit { background-color: #9E9E9E;' +\
+line_edit_style = 'QLineEdit { background-color: transparent; ' \
                   'max-height: %dpx; min-height: %dpx;' % (label_height, label_height) +\
-                  'font-family: \'Microsoft YaHei UI\';' \
-                  'font-weight: bold;' +\
+                  'font-family: \'Microsoft YaHei UI\';' +\
                   'font-size: %dpx;' % general_tip_font_size +\
-                  'color: white;' \
-                  'border: none;' \
-                  'border-radius: 4px }'
+                  'color: black; border-bottom: 2px solid %s; border-top: none}' % line_edit_color
 
 # 数值显示标签样式
 display_value_label_style = 'QLabel { background-color: #9E9E9E;' +\
                             'min-height: %dpx; max-height: %dpx;' % (label_height, label_height) +\
                             'min-width: %dpx; max-width: %dpx;' % (label_width, label_width) +\
-                            'border-radius: 4px;' \
-                            'font-family: \'Microsoft YaHei UI\';' \
-                            'font-weight: bold;' +\
+                            'border-radius: 4px; font-family: \'Microsoft YaHei UI\';' +\
                             'font-size: %dpx;' % general_tip_font_size +\
                             'color: white; padding-left: 2px }'
-
-# 机型信息界面中标题样式
-aircraft_title_label_style = 'QLabel { background-color: #3A3E5B; font-family: \'Microsoft YaHei UI\';' +\
-                             'min-height: %dpx; max-height: %dpx; padding-left: 2px;' % (label_height, label_height) +\
-                             'font-weight: bold; font-size: %dpx; color: white}' % general_tip_font_size
 
 # 复选框样式
 combo_box_style = 'QAbstractItemView { background-color: white; }' \
@@ -127,6 +136,18 @@ group_box_style = 'QGroupBox { font-family: \'Microsoft YaHei UI\';' \
                   'font-weight: bold;' +\
                   'font-size: %dpx;' % general_tip_font_size +\
                   'color: black; }'
+
+date_edit_style = 'QDateEdit { background-color: transparent; ' \
+                  'max-height: %dpx; min-height: %dpx;' % (label_height, label_height) +\
+                  'font-family: \'Microsoft YaHei UI\';' +\
+                  'font-size: %dpx;' % general_tip_font_size +\
+                  'color: black; border-bottom: 2px solid %s; border-top: none}' % line_edit_color
+
+double_spin_style = 'QDoubleSpinBox { background-color: transparent; ' \
+                    'max-height: %dpx; min-height: %dpx;' % (label_height, label_height) +\
+                    'font-family: \'Microsoft YaHei UI\';' +\
+                    'font-size: %dpx;' % general_tip_font_size +\
+                    'color: black; border-bottom: 2px solid %s; border-top: none}' % line_edit_color
 
 
 # 设置配置信息

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QVBoxLayout, QLabel, QSpacerIt
                              QGroupBox)
 
 from data_models import data_collector, config_info
+from widgets.result_info_show_widget import ResultInfoShowWidget
 
 
 class AircraftFuelTankSketch(QFrame):
@@ -37,8 +38,6 @@ class AircraftFuelTankSketch(QFrame):
         self.old_height = self.height()
 
         # self.setStyleSheet('QFrame { background: gray }')
-        # 加载油箱外形数据
-        data_collector.load_fuel_bank_frame_data_from_excel()
         # 创建油箱外形的轮廓
         self.load_fuel_bank_path()
 
@@ -61,21 +60,21 @@ class AircraftFuelTankSketch(QFrame):
 
         # 机翼外形路径
         self.aircraft_fuel_out_path = QPainterPath()
-        x0, y0 = data_collector.aircraft_fuel_out_frame[0]
+        x0, y0 = data_collector.aircraft.aircraft_fuel_out_frame[0]
         # 移动到初始点
         self.aircraft_fuel_out_path.moveTo(*transform_xy(x0, y0))
-        for x, y in data_collector.aircraft_fuel_out_frame:
+        for x, y in data_collector.aircraft.aircraft_fuel_out_frame:
             x, y = transform_xy(x, y)
             self.aircraft_fuel_out_path.lineTo(x, y)
         self.aircraft_fuel_out_path.closeSubpath()
         # 中央翼油箱外形
         self.aircraft_center_fuel_path = QPainterPath()
-        x0, y0 = data_collector.aircraft_center_fuel_frame[0]
+        x0, y0 = data_collector.aircraft.aircraft_center_fuel_frame[0]
         x0, y0 = transform_xy(x0, y0)
         self.aircraft_center_fuel_path.moveTo(x0, y0)
         left = right = x0
         top = bottom = y0
-        for x, y in data_collector.aircraft_center_fuel_frame:
+        for x, y in data_collector.aircraft.aircraft_center_fuel_frame:
             x, y = transform_xy(x, y)
             # 获取遮挡的矩形数据
             if x < left:
@@ -91,12 +90,12 @@ class AircraftFuelTankSketch(QFrame):
         self.aircraft_center_fuel_path.closeSubpath()
         # 左翼油箱外形
         self.aircraft_left_fuel_path = QPainterPath()
-        x0, y0 = data_collector.aircraft_left_fuel_frame[0]
+        x0, y0 = data_collector.aircraft.aircraft_left_fuel_frame[0]
         x0, y0 = transform_xy(x0, y0)
         self.aircraft_left_fuel_path.moveTo(x0, y0)
         left = right = x0
         top = bottom = y0
-        for x, y in data_collector.aircraft_left_fuel_frame:
+        for x, y in data_collector.aircraft.aircraft_left_fuel_frame:
             x, y = transform_xy(x, y)
             if x < left:
                 left = x
@@ -111,12 +110,12 @@ class AircraftFuelTankSketch(QFrame):
         self.aircraft_left_fuel_path.closeSubpath()
         # 右翼油箱外形
         self.aircraft_right_fuel_path = QPainterPath()
-        x0, y0 = data_collector.aircraft_right_fuel_frame[0]
+        x0, y0 = data_collector.aircraft.aircraft_right_fuel_frame[0]
         x0, y0 = transform_xy(x0, y0)
         self.aircraft_right_fuel_path.moveTo(x0, y0)
         left = right = x0
         top = bottom = y0
-        for x, y in data_collector.aircraft_right_fuel_frame:
+        for x, y in data_collector.aircraft.aircraft_right_fuel_frame:
             x, y = transform_xy(x, y)
             if x < left:
                 left = x
@@ -133,10 +132,10 @@ class AircraftFuelTankSketch(QFrame):
     # 等比例缩放飞机，长宽缩放保持一致
     @staticmethod
     def normal_transform_ratio(wid, hei):
-        if hei * data_collector.ratio_w_h > wid:
-            hei = wid / data_collector.ratio_w_h
-        elif hei * data_collector.ratio_w_h < wid:
-            wid = hei * data_collector.ratio_w_h
+        if hei * data_collector.aircraft.ratio_w_h > wid:
+            hei = wid / data_collector.aircraft.ratio_w_h
+        elif hei * data_collector.aircraft.ratio_w_h < wid:
+            wid = hei * data_collector.aircraft.ratio_w_h
         return wid, hei
 
     # 重写绘图函数
@@ -297,18 +296,18 @@ class AircraftFuelTankControl(QFrame):
     def change_fuel_display(self, value):
         sender = QObject.sender(self)
         if sender == self.vertical_slider_left_tank:
-            fuel = value * data_collector.fuel_info['left_limit'] / 100
+            fuel = value * data_collector.aircraft.fuel_info['left_limit'] / 100
             # 更新data_collector中的数据
-            data_collector.set_fuel_info(left=fuel)
+            data_collector.aircraft.set_fuel_info(left=fuel)
             # 更新控制条的位置
             self.double_spinBox_left_tank.setValue(fuel)
         if sender == self.vertical_slider_center_tank:
-            fuel = value * data_collector.fuel_info['center_limit'] / 100
-            data_collector.set_fuel_info(central=fuel)
+            fuel = value * data_collector.aircraft.fuel_info['center_limit'] / 100
+            data_collector.aircraft.set_fuel_info(central=fuel)
             self.double_spinBox_center_tank.setValue(fuel)
         if sender == self.vertical_slider_right_tank:
-            fuel = value * data_collector.fuel_info['right_limit'] / 100
-            data_collector.set_fuel_info(right=fuel)
+            fuel = value * data_collector.aircraft.fuel_info['right_limit'] / 100
+            data_collector.aircraft.set_fuel_info(right=fuel)
             self.double_spinBox_right_tank.setValue(fuel)
 
         self.signal_fuel_change.emit(self.vertical_slider_center_tank.value() / 100,
@@ -317,18 +316,18 @@ class AircraftFuelTankControl(QFrame):
 
     # 显示限制燃油值
     def display_limit_fuel_value(self):
-        self.label_left_tank_limit.setText('%.1f kg' % data_collector.fuel_info['left_limit'])
-        self.label_center_tank_limit.setText('%.1f kg' % data_collector.fuel_info['center_limit'])
-        self.label_right_tank_limit.setText('%.1f kg' % data_collector.fuel_info['right_limit'])
+        self.label_left_tank_limit.setText('%.1f kg' % data_collector.aircraft.fuel_info['left_limit'])
+        self.label_center_tank_limit.setText('%.1f kg' % data_collector.aircraft.fuel_info['center_limit'])
+        self.label_right_tank_limit.setText('%.1f kg' % data_collector.aircraft.fuel_info['right_limit'])
 
     # 显示燃油量
     def display_fuel_value(self):
         self.vertical_slider_left_tank.setValue(
-            data_collector.fuel_info['left'] / data_collector.fuel_info['left_limit'] * 100)
+            data_collector.aircraft.fuel_info['left'] / data_collector.aircraft.fuel_info['left_limit'] * 100)
         self.vertical_slider_center_tank.setValue(
-            data_collector.fuel_info['central'] / data_collector.fuel_info['center_limit'] * 100)
+            data_collector.aircraft.fuel_info['central'] / data_collector.aircraft.fuel_info['center_limit'] * 100)
         self.vertical_slider_right_tank.setValue(
-            data_collector.fuel_info['right'] / data_collector.fuel_info['right_limit'] * 100)
+            data_collector.aircraft.fuel_info['right'] / data_collector.aircraft.fuel_info['right_limit'] * 100)
 
     def translate(self):
         self.label_left_tank_limit.setText("TextLabel")
@@ -365,3 +364,18 @@ class AircraftFuelTankWidget(QGroupBox):
         self.fuel_tank_control.display_limit_fuel_value()
         # 更新初始燃油重量
         self.fuel_tank_control.display_fuel_value()
+
+
+class AircraftFuelTankPage(QFrame):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.verticalLayout = QVBoxLayout(self)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.aircraft_fuel_tank = AircraftFuelTankWidget(self)
+        self.verticalLayout.addWidget(self.aircraft_fuel_tank)
+        self.show_result_info_widget = ResultInfoShowWidget()
+        self.verticalLayout.addWidget(self.show_result_info_widget)
+        self.verticalLayout.setStretch(0, 1)
+        self.verticalLayout.setStretch(1, 1)

@@ -4,7 +4,8 @@ from PyQt5.QtCore import Qt, QModelIndex, pyqtSignal
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QMenu, QAction, QDialog,
                              QMessageBox, QTreeView, QAbstractItemView, QHeaderView,
-                             QStyleOptionViewItem, QStyledItemDelegate, QLineEdit)
+                             QStyleOptionViewItem, QStyledItemDelegate, QLineEdit,
+                             QDoubleSpinBox, QAbstractSpinBox)
 
 from widgets.custom_dialog import UnitEditDialog
 from data_models import config_info, data_collector
@@ -138,11 +139,14 @@ class MatrixDataTree(QTreeView):
         # 不显示箭头
         self.setRootIsDecorated(False)
         # 设置表头
+        self.header().setHidden(True)
         self.header().setSectionResizeMode(QHeaderView.Stretch)
         self.header().setDefaultAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         # 设置样式
         self.setStyleSheet(config_info.tree_view_style)
         # self.setAlternatingRowColors(True)
+        # 不显示滚动条
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     # 重载绘制行的函数
     def drawRow(self, painter: QPainter, options: QStyleOptionViewItem, index: QModelIndex):
@@ -172,6 +176,8 @@ class MultiMatrixTree(QTreeView):
         # 设置样式
         self.setStyleSheet(config_info.tree_view_style)
         # self.setAlternatingRowColors(True)
+        # 不显示滚动条
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     # 重载绘制行的函数
     def drawRow(self, painter: QPainter, options: QStyleOptionViewItem, index: QModelIndex):
@@ -209,6 +215,17 @@ class UseItemTreeView(QTreeView):
         QTreeView.drawRow(self, painter, opt, index)
 
 
+# 自定义的数值输入框
+class CustomDoubleSpinBox(QDoubleSpinBox):
+    def __init__(self, parent=None, decimals=1, minimum=0, maximum=1000000*100000):
+        super().__init__(parent)
+
+        self.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.setDecimals(decimals)
+        self.setMaximum(maximum)
+        self.setMinimum(minimum)
+
+
 # 为使用项目树写一个编辑代理
 class UseItemTreeDelegate(QStyledItemDelegate):
     signal_edit_finished = pyqtSignal(QModelIndex)
@@ -217,17 +234,47 @@ class UseItemTreeDelegate(QStyledItemDelegate):
         super().__init__(parent)
 
     def createEditor(self, parent, option, index):
-        editor = QLineEdit(parent)
-        editor.setAlignment(Qt.AlignHCenter)
+        if index.column() == 0:
+            editor = QLineEdit(parent)
+            editor.setAlignment(Qt.AlignHCenter)
+        elif index.column() == 1 or index.column() == 2:
+            editor = CustomDoubleSpinBox(parent)
+            editor.setAlignment(Qt.AlignHCenter)
+        elif index.column() == 3:
+            return None
+        else:
+            editor = QLineEdit(parent)
+            editor.setAlignment(Qt.AlignHCenter)
         return editor
 
     def setEditorData(self, editor, index):
         value = index.model().data(index)
-        editor.setText(value)
+        if index.column() == 0:
+            editor.setText(value)
+        elif index.column() == 1 or index.column() == 2 or index.column() == 3:
+            editor.setValue(value)
+        else:
+            editor.setText(value)
 
     def setModelData(self, editor, model, index):
-        value = editor.text()
-        model.setData(index, value)
+        if index.column() == 0:
+            value = editor.text()
+            model.setData(index, value)
+        elif index.column() == 1:
+            value = editor.value()
+            model.setData(index, value)
+            second_col_index = model.index(index.row(), 2)
+            third_col_index = model.index(index.row(), 3)
+            model.setData(third_col_index, value * model.data(second_col_index))
+        elif index.column() == 2:
+            value = editor.value()
+            model.setData(index, value)
+            first_col_index = model.index(index.row(), 1)
+            third_col_index = model.index(index.row(), 3)
+            model.setData(third_col_index, value * model.data(first_col_index))
+        else:
+            value = editor.text()
+            model.setData(index, value)
         self.signal_edit_finished.emit(index)
 
     def updateEditorGeometry(self, editor, option, index):

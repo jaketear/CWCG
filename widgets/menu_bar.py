@@ -22,7 +22,7 @@ class MenuBar(QFrame):
 
         # 菜单栏的各项目名称
         # self.menu_items_list = menu_items
-        self.menu_items_list = ['机型', '称重', '配载', '项目', '燃油', '报告']
+        self.menu_items_list = ['机型', '称重', '配载', '使用项目', '燃油', '报告']
 
         # 箭头的角度属性
         self.arrow_angle = arrow_angle
@@ -34,11 +34,11 @@ class MenuBar(QFrame):
         self.arrows_path = list()
 
         # 箭头选中的颜色
-        self.selected_brush = QBrush(QColor(config_info.button_selected_color))
-        self.un_selected_brush = QBrush(QColor(config_info.button_un_selected_color))
+        self.selected_brush = QBrush(QColor(config_info.menu_bar_button_selected_color))
+        self.un_selected_brush = QBrush(QColor(config_info.menu_bar_button_un_selected_color))
         # 箭头选中的阴影颜色
-        self.shadow_selected_brush = QBrush(QColor(config_info.button_selected_shadow_color))
-        self.shadow_un_selected_brush = QBrush(QColor(config_info.button_un_selected_shadow_color))
+        self.shadow_selected_brush = QBrush(QColor(config_info.menu_bar_button_selected_shadow_color))
+        self.shadow_un_selected_brush = QBrush(QColor(config_info.menu_bar_button_un_selected_shadow_color))
 
         # 文字距离边界距离
         self.font_margin = font_margin
@@ -158,8 +158,12 @@ class MenuBar(QFrame):
         painter.setFont(font)
         # 增加文字
         for i, text in enumerate(self.menu_items_list):
-            pos_x = delta_wid + (arrow_wid + self.arrow_space) * i
-            pos_y = self.font_margin
+            if i == self.current_select_index:
+                pos_x = delta_wid + (arrow_wid + self.arrow_space) * i + 2
+                pos_y = self.font_margin + 2
+            else:
+                pos_x = delta_wid + (arrow_wid + self.arrow_space) * i
+                pos_y = self.font_margin
             t_wid = arrow_wid - delta_wid
             t_hei = hei - self.font_margin * 2 - 2
             # painter.drawRect(QRect(pos_x, pos_y, t_wid, t_hei))

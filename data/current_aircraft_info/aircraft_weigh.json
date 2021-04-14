@@ -1,0 +1,37 @@
+{
+    "aircraft_type": "C919",
+    "aircraft": "10105",
+    "weigh_method": "\u5730\u79e4\u79f0\u91cd\u6cd5",
+    "weigh_location": "\u5357\u660c",
+    "weigh_date": "2020/04/16",
+    "weigh_tyre_nr": [
+        2842.0,
+        2838.0
+    ],
+    "weigh_tyre_nl": [
+        2512.0,
+        2514.0
+    ],
+    "weigh_tyre_lo": [
+        10815.0,
+        10820.0
+    ],
+    "weigh_tyre_li": [
+        9780.0,
+        9770.0
+    ],
+    "weigh_tyre_ri": [
+        9830.0,
+        9825.0
+    ],
+    "weigh_tyre_ro": [
+        10820.0,
+        10820.0
+    ],
+    "weigh_pillar_ln": 163.0,
+    "weigh_pillar_lmr": 165.0,
+    "weigh_pillar_lml": 172.0,
+    "pitch_angle": -0.6,
+    "redundant_unit": [],
+    "absence_unit": []
+}

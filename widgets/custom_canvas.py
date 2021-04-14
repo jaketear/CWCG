@@ -87,7 +87,7 @@ class FuelConsumptionCanvas(FigureCanvas):
         self.fig.clf()
         ax = self.fig.add_subplot(1, 1, 1)
 
-        fuel_consumption_sum, cg_real_time = data_collector.get_fuel_consume_data()
+        fuel_consumption_sum, cg_real_time = data_collector.aircraft.get_fuel_consume_data()
 
         self.line_gear_down, = ax.plot(cg_real_time['LG_down'], fuel_consumption_sum["weight"], lw=2)
         self.line_gear_up, = ax.plot(cg_real_time['LG_up'], fuel_consumption_sum["weight"], lw=2)
@@ -107,7 +107,7 @@ class FuelConsumptionCanvas(FigureCanvas):
     # 更新燃油消耗曲线
     def refresh_fuel_consume_line_data(self):
         if isinstance(self.line_gear_down, Line2D) and isinstance(self.line_gear_up, Line2D):
-            fuel_consumption_sum, cg_real_time = data_collector.get_fuel_consume_data()
+            fuel_consumption_sum, cg_real_time = data_collector.aircraft.get_fuel_consume_data()
             self.line_gear_down.set_data(cg_real_time['LG_down'], fuel_consumption_sum["weight"])
             self.line_gear_up.set_data(cg_real_time['LG_up'], fuel_consumption_sum["weight"])
 

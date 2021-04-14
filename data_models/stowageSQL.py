@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import pymysql
+# import pymysql
 import sqlite3
 import os
 

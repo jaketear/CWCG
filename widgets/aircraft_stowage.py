@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (QWidget, QPushButton,
     QFrame, QApplication)
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import *
-from qtpy import QtCore
+# from qtpy import QtCore
 
 
 class AircraftStowageSketch(QFrame):
@@ -209,7 +209,7 @@ class AircraftStowageControl(QFrame):
             newItem = QTableWidgetItem(frame_list[i])
             newItem.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.TableWidget.setItem(i, 0, newItem)
-            newItem.setFlags(QtCore.Qt.ItemIsEnabled)
+            newItem.setFlags(Qt.ItemIsEnabled)
 
         newItem.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.TableWidget.setItem(3, 0, newItem)

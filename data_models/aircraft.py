@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import configparser
+import os
+import os.path as path
+import json
 
 from data_models import config_info, CGmethod, ZFWmethod, fuelConsumptionMethod
 
@@ -31,6 +34,17 @@ class AircraftBaseClass(object):
         self.frame_pos = dict()
         # 飞机框位图路径
         self.aircraft_frame_pic_path = ''
+
+        # 用于显示的飞机外形数据
+        self.aircraft_frame = None
+        self.aircraft_frame_ratio_w_h = 529 / 577
+
+        # 用于显示的飞机油箱外形数据
+        self.aircraft_fuel_out_frame = None
+        self.aircraft_center_fuel_frame = None
+        self.aircraft_left_fuel_frame = None
+        self.aircraft_right_fuel_frame = None
+        self.ratio_w_h = 1612 / 580
 
         # ---限制---
         # 重量限制，重量限制和限制值的对应关系表
@@ -67,9 +81,16 @@ class AircraftBaseClass(object):
                                weigh_tyre_nr=[0, 0], weigh_tyre_nl=[0, 0],
                                weigh_tyre_lo=[0, 0], weigh_tyre_li=[0, 0],
                                weigh_tyre_ri=[0, 0], weigh_tyre_ro=[0, 0],
-                               weigh_pillar_ln=0, weigh_pillar_lmr=0, weigh_pillar_lml=0,
+                               weigh_pillar_ln=0.0, weigh_pillar_lmr=0.0, weigh_pillar_lml=0.0,
                                pitch_angle=0.0,
                                redundant_unit=list(), absence_unit=list())
+        # 飞机称重结果信息
+        # 实际重量重心
+        self.real_weight_in_weigh = 0.0
+        self.real_cg_in_weigh = 0.0
+        # 空机重量重心
+        self.aircraft_empty_weight = 0.0
+        self.aircraft_empty_cg = 0.0
 
         # ---配载和装载信息---
         # --operation_item-使用项目,load-配重(列表型列表，[名称, 重量, 力臂])
@@ -86,9 +107,9 @@ class AircraftBaseClass(object):
         # --燃油消耗曲线计算方法--
         self.fuel_consumption_calculate_object = fuelConsumptionMethod.FuleConsumption()
 
-        self.init_aircraft_by_file(r'D:\CWCG\C919_10106.ini')
+        self.init_aircraft_by_file(config_info.current_aircraft_info_save_dir)
 
-    # 计算空机重量及力矩
+    # 计算零油重量及力矩
     def calculate_zfw_and_moment(self):
         item_weight = self.weigh_data_calculate_object.Wt
         item_arm = self.weigh_data_calculate_object.Xt_ * self.mean_aero_chord / 100 + self.mac_front_distance
@@ -101,6 +122,23 @@ class AircraftBaseClass(object):
                 item_moment += weight * arm
 
         return item_weight, item_moment
+
+    # 导出称重信息到json文件中
+    def export_weight_info_to_json(self, file_dir):
+        result_tip = ''
+        if not file_dir:
+            file_dir = config_info.current_aircraft_info_save_dir + os.sep + 'aircraft_weigh.json'
+        if isinstance(self.weigh_info, dict):
+            try:
+                with open(file_dir, 'w+') as f:
+                    json.dump(self.weigh_info, f, indent=4)
+            except FileExistsError:
+                result_tip = 'FileExistsError：数据文件已存在，无法创建!'
+            except FileNotFoundError:
+                result_tip = 'FileNotFoundError：数据文件不存在!'
+            except OSError:
+                result_tip = 'OSError：无法读取数据文件!'
+        return result_tip
 
     # 获取飞机基本信息
     def get_aircraft_base_info(self):
@@ -123,7 +161,7 @@ class AircraftBaseClass(object):
                                                                zero_fuel_weight=['零油重量', 0, 0, 0, 0],
                                                                fuel_item=['燃油', 0, 0, 0, 0],
                                                                total_weight=['总重', 0, 0, 0, 0]),
-                                    operation_items=self.stowage_info['operation_items'],
+                                    operation_items=list(),
                                     stowage_items=list(),
                                     fuel_items=list())
         aircraft_weight_info['major_aircraft_weight']['test_empty_weight'] = ['试验空机重量',
@@ -136,6 +174,8 @@ class AircraftBaseClass(object):
                                                                              47696, 20784.2, 991330018.9, 22.2]
         aircraft_weight_info['major_aircraft_weight']['total_weight'] = ['总重',
                                                                          62696, 20709.2, 1298395711.7, 20.4]
+        operation_items = [x.append(0) for x in self.stowage_info['operation_items']]
+        aircraft_weight_info['operation_items'] = operation_items
         return aircraft_weight_info
 
     # 获取燃油消耗数据
@@ -152,7 +192,8 @@ class AircraftBaseClass(object):
         return fuel_consumption_sum, cg_real_time
 
     # 通过配置文件，初始化飞机信息
-    def init_aircraft_by_file(self, aircraft_config_file_path):
+    def init_aircraft_by_file(self, aircraft_info_dir):
+        aircraft_config_file_path = aircraft_info_dir+ os.sep + 'aircraft_info.ini'
         # 加载配置文件
         with open(aircraft_config_file_path, 'r') as config_file_obj:
             config_parser = configparser.ConfigParser()
@@ -163,9 +204,9 @@ class AircraftBaseClass(object):
         # 飞机编号
         self.aircraft_id = config_parser.get('general', 'aircraft_id')
         # 平均气动弦长
-        self.mean_aero_chord = config_parser.get('configuration', 'mean_aero_chord')
+        self.mean_aero_chord = float(config_parser.get('configuration', 'mean_aero_chord'))
         # 机翼平均气动力弦长前缘点航向位置
-        self.mac_front_distance = config_parser.get('configuration', 'mac_front_distance')
+        self.mac_front_distance = float(config_parser.get('configuration', 'mac_front_distance'))
         # 飞机框位图路径
         self.aircraft_frame_pic_path = config_parser.get('configuration', 'aircraft_frame_pic_path')
 
@@ -208,19 +249,108 @@ class AircraftBaseClass(object):
             item_value = item_value[1:-1]
             self.major_stowage_data[item_name] = [float(item_value.split(',')[0]), float(item_value.split(',')[1])]
 
+        # 加载飞机几何数据
+        self.load_aircraft_geo_data_from_json(aircraft_info_dir + os.sep + 'aircraft_geo_data.json')
+        # 加载飞机称重数据
+        self.load_weigh_info_from_json(aircraft_info_dir + os.sep + 'aircraft_weigh.json')
+        # 计算称重结果
+        self.update_weigh_result()
+
     # 添加使用项目
-    def operation_item_add(self, item_info):
-        self.stowage_info['operation_items'].append(item_info)
+    def item_add(self, item_info, item_type):
+        if item_type == 'operation item':
+            self.stowage_info['operation_items'].append(item_info)
+        if item_type == 'redundant item':
+            self.weigh_info['redundant_unit'].append(item_info)
+        if item_type == 'absence item':
+            self.weigh_info['absence_unit'].append(item_info)
+        # print('add operation item: ', self.stowage_info['operation_items'])
+        # print('add redundant item: ', self.weigh_info['redundant_unit'])
+        # print('add absence item: ', self.weigh_info['absence_unit'])
 
     # 修改使用项目
-    def operation_item_edit(self, index, item_info):
-        if index < len(self.stowage_info['operation_items']):
-            self.stowage_info['operation_items'][index] = item_info
+    def item_edit(self, index, item_info, item_type):
+        if item_type == 'operation item':
+            if index < len(self.stowage_info['operation_items']):
+                self.stowage_info['operation_items'][index] = item_info
+        if item_type == 'redundant item':
+            if index < len(self.weigh_info['redundant_unit']):
+                self.weigh_info['redundant_unit'][index] = item_info
+        if item_type == 'absence item':
+            if index < len(self.weigh_info['absence_unit']):
+                self.weigh_info['absence_unit'][index] = item_info
+        # print('edit operation item: ', self.stowage_info['operation_items'])
+        # print('edit redundant item: ', self.weigh_info['redundant_unit'])
+        # print('edit absence item: ', self.weigh_info['absence_unit'])
 
     # 删除使用项目
-    def operation_item_del(self, index):
-        if index < len(self.stowage_info['operation_items']):
-            self.stowage_info['operation_items'].pop(index)
+    def item_del(self, index, item_type):
+        if item_type == 'operation item':
+            if index < len(self.stowage_info['operation_items']):
+                self.stowage_info['operation_items'].pop(index)
+        if item_type == 'redundant item':
+            if index < len(self.weigh_info['redundant_unit']):
+                self.weigh_info['redundant_unit'].pop(index)
+        if item_type == 'absence item':
+            if index < len(self.weigh_info['absence_unit']):
+                self.weigh_info['absence_unit'].pop(index)
+        # print('del operation item: ', self.stowage_info['operation_items'])
+        # print('del redundant item: ', self.weigh_info['redundant_unit'])
+        # print('del absence item: ', self.weigh_info['absence_unit'])
+
+    # 从json文件中读取称重信息
+    def load_weigh_info_from_json(self, file_dir):
+        result_tip = ''
+        if path.isfile(file_dir):
+            try:
+                with open(file_dir, 'r') as f:
+                    weigh_info = json.load(f)
+                    if isinstance(weigh_info, dict):
+                        self.set_weigh_info(**weigh_info)
+                    else:
+                        result_tip = '数据文件无法解析！'
+            except FileExistsError:
+                result_tip = 'FileExistsError：数据文件已存在，无法创建!'
+            except FileNotFoundError:
+                result_tip = 'FileNotFoundError：数据文件不存在!'
+            except OSError:
+                result_tip = 'OSError：无法读取数据文件!'
+            except TypeError:
+                result_tip = 'TypeError：类型错误!'
+        else:
+            result_tip = '路径未对应一个文件!'
+        return result_tip
+
+    # 从json文件中读取用于显示的飞机几何数据
+    def load_aircraft_geo_data_from_json(self, file_dir):
+        result_tip = ''
+        if path.isfile(file_dir):
+            try:
+                with open(file_dir, 'r') as f:
+                    aircraft_geo_data_dict = json.load(f)
+                    if isinstance(aircraft_geo_data_dict, dict):
+                        self.aircraft_frame = [(x[0], x[1]) for x in aircraft_geo_data_dict['aircraft_geo_frame']]
+                        self.aircraft_fuel_out_frame = \
+                            [(x[0], x[1]) for x in aircraft_geo_data_dict['fuel_geo_out_frame']]
+                        self.aircraft_center_fuel_frame = \
+                            [(x[0], x[1]) for x in aircraft_geo_data_dict['fuel_geo_center_tank']]
+                        self.aircraft_left_fuel_frame = \
+                            [(x[0], x[1]) for x in aircraft_geo_data_dict['fuel_geo_left_tank']]
+                        self.aircraft_right_fuel_frame = \
+                            [(x[0], x[1]) for x in aircraft_geo_data_dict['fuel_geo_right_tank']]
+                    else:
+                        result_tip = '数据文件无法解析！'
+            except FileExistsError:
+                result_tip = 'FileExistsError：数据文件已存在，无法创建!'
+            except FileNotFoundError:
+                result_tip = 'FileNotFoundError：数据文件不存在!'
+            except OSError:
+                result_tip = 'OSError：无法读取数据文件!'
+            except TypeError:
+                result_tip = 'TypeError：类型错误!'
+        else:
+            result_tip = '路径未对应一个文件!'
+        return result_tip
 
     @staticmethod
     # 将字符串型2*n数组转成数值型数组，类型如：'[[12,34],[56,78]]'
@@ -236,6 +366,7 @@ class AircraftBaseClass(object):
             if k in self.weigh_info:
                 if isinstance(kwargs[k], type(self.weigh_info[k])):
                     self.weigh_info[k] = kwargs[k]
+        self.weigh_data_calculate_object.set_weigh_info(self.weigh_info)
 
     # 设置燃油信息
     def set_fuel_info(self, **kwargs):
@@ -243,3 +374,10 @@ class AircraftBaseClass(object):
             if k in self.fuel_info:
                 if isinstance(kwargs[k], type(self.fuel_info[k])):
                     self.fuel_info[k] = kwargs[k]
+
+    def update_weigh_result(self):
+        self.weigh_data_calculate_object.recalculate_weight_cg()
+        self.real_cg_in_weigh = self.weigh_data_calculate_object.get_weigh_result('实测重心')
+        self.real_weight_in_weigh = self.weigh_data_calculate_object.get_weigh_result('实测重量')
+        self.aircraft_empty_weight = self.weigh_data_calculate_object.get_weigh_result('空机重量')
+        self.aircraft_empty_cg = self.weigh_data_calculate_object.get_weigh_result('空机重心')

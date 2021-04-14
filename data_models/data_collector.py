@@ -8,6 +8,10 @@ import json
 from data_models import config_info, CGmethod, ZFWmethod, fuelConsumptionMethod
 from data_models.aircraft import AircraftBaseClass
 
+# 用户权限
+user_authority = None
+
+# 飞机实例
 aircraft = AircraftBaseClass()
 
 # 飞机重量重心相关数据
