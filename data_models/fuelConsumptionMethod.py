@@ -20,6 +20,7 @@ class FuleConsumption():
             'SELECT fuel_display,actual_fuel FROM fuel_display_deviation where ' + \
             '\ufeff' + 'wing_fuel_tank="' + position + '"')
 
+        # print('position: %s, fuel_display: %f' % (position, fuel_display))
         l = len(fuel)
         list = []
         for i in range(l):
@@ -34,6 +35,51 @@ class FuleConsumption():
             y = [float(fuel[boundary[0]][1]), float(fuel[boundary[1]][1])]
             f = interpolate.interp1d(x, y, kind='linear')
             result = f(fuel_display)
+
+        return result
+
+    # 显示燃油与实际燃油的对照关系
+    def fuel_display_actual_relation(self, fuel_value, fuel_type, position):
+        sql = sql_information()
+        fuel = sql.query_data(
+            'SELECT fuel_display,actual_fuel FROM fuel_display_deviation where ' + \
+            '\ufeff' + 'wing_fuel_tank="' + position + '"')
+
+        # print('position: %s, fuel_display: %f' % (position, fuel_display))
+        l = len(fuel)
+        # 显示和实际的数据列表
+        list_display = []
+        list_actual = []
+        for i in range(l):
+            list_display.append(float(fuel[i][0]))
+            list_actual.append(float(fuel[i][1]))
+
+        # 找到油量对应的区间
+        if fuel_type == 'display':
+            boundary = self.search(list_display, float(fuel_value))
+        elif fuel_type == 'actual':
+            boundary = self.search(list_actual, float(fuel_value))
+        else:
+            return None
+
+        if type(boundary) == int:
+            if fuel_type == 'display':
+                result = float(fuel[boundary][1])
+            elif fuel_type == 'actual':
+                result = float(fuel[boundary][0])
+            else:
+                return None
+        else:
+            if fuel_type == 'display':
+                x = [float(fuel[boundary[0]][0]), float(fuel[boundary[1]][0])]
+                y = [float(fuel[boundary[0]][1]), float(fuel[boundary[1]][1])]
+            elif fuel_type == 'actual':
+                y = [float(fuel[boundary[0]][0]), float(fuel[boundary[1]][0])]
+                x = [float(fuel[boundary[0]][1]), float(fuel[boundary[1]][1])]
+            else:
+                return None
+            f = interpolate.interp1d(x, y, kind='linear')
+            result = f(fuel_value)
 
         return result
 
@@ -56,7 +102,6 @@ class FuleConsumption():
             y = [float(fuel[boundary[0]][1]), float(fuel[boundary[1]][1])]
             f = interpolate.interp1d(x, y, kind='linear')
             result = f(actual_fuel)
-
         return result
 
     def search(self, list, key):
@@ -91,7 +136,7 @@ class FuleConsumption():
                 actual_fuel['right'] = self.fuel_display_deviation(display_fuel['right'], 'right')
                 actual_fuel_arm['left'] = self.fuel_and_arm(actual_fuel['left'], 'left')
                 actual_fuel_arm['right'] = self.fuel_and_arm(actual_fuel['right'], 'right')
-                if display_fuel['left'] > 500:
+                if display_fuel['left'] > 500 and display_fuel['right'] > 500:
                     display_fuel['left'] = display_fuel['left'] - 500
                     display_fuel['right'] = display_fuel['right'] - 500
                 else:

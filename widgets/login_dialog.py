@@ -138,8 +138,13 @@ class LoginDialog(QDialog):
                     else:
                         QMessageBox.information(self, '提示', '无法连接服务器，请稍后重试！')
                 else:
+                    self.line_edit_user_name.clear()
+                    self.line_edit_password.clear()
+                    self.line_edit_user_name.setFocus()
                     QMessageBox.information(self, '提示', '用户名或密码错误！')
             else:
+                self.line_edit_user_name.clear()
+                self.line_edit_user_name.setFocus()
                 QMessageBox.information(self, '提示', '用户名为工号，请输入正确的工号！')
         else:
             QMessageBox.information(self, '提示', '用户名或密码不能为空！')

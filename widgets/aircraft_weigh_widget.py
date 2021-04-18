@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import Qt, QDate
+from PyQt5.QtCore import Qt, QDate, pyqtSignal
 from PyQt5.QtGui import QPainter, QPaintEvent, QPainterPath, QMouseEvent
 from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QSplitter, QWidget, QVBoxLayout,
                              QGroupBox, QGridLayout, QLabel, QLineEdit, QDialog,
@@ -55,10 +55,10 @@ class AircraftSketch(QFrame):
     # 等比例缩放飞机，长宽缩放保持一致
     @staticmethod
     def normal_transform_ratio(wid, hei):
-        if hei * data_collector.aircraft_frame_ratio_w_h > wid:
-            hei = wid / data_collector.aircraft_frame_ratio_w_h
-        elif hei * data_collector.aircraft_frame_ratio_w_h < wid:
-            wid = hei * data_collector.aircraft_frame_ratio_w_h
+        if hei * data_collector.aircraft.aircraft_frame_ratio_w_h > wid:
+            hei = wid / data_collector.aircraft.aircraft_frame_ratio_w_h
+        elif hei * data_collector.aircraft.aircraft_frame_ratio_w_h < wid:
+            wid = hei * data_collector.aircraft.aircraft_frame_ratio_w_h
         return wid, hei
 
     # 重写绘图函数
@@ -156,6 +156,8 @@ class TyreWeightGroupbox(QGroupBox):
 
 
 class AircraftWeighWidget(QFrame):
+    signal_weigh_info_change = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -177,35 +179,44 @@ class AircraftWeighWidget(QFrame):
         self.gridLayout = QGridLayout(self.gb_weigh_info)
         self.gridLayout.setContentsMargins(6, 2, 6, 6)
         self.gridLayout.setSpacing(6)
+
+        self.label_weigh_report_id = QLabel(self.gb_weigh_info)
+        self.label_weigh_report_id.setStyleSheet(config_info.label_style)
+        self.label_weigh_report_id.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.gridLayout.addWidget(self.label_weigh_report_id, 0, 0, 1, 1)
+        self.line_edit_weigh_report_id = QLineEdit(self.gb_weigh_info)
+        self.line_edit_weigh_report_id.setStyleSheet(config_info.line_edit_style)
+        self.gridLayout.addWidget(self.line_edit_weigh_report_id, 0, 1, 1, 7)
+
         self.label_weigh_date = QLabel(self.gb_weigh_info)
         self.label_weigh_date.setStyleSheet(config_info.label_style)
         self.label_weigh_date.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.gridLayout.addWidget(self.label_weigh_date, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.label_weigh_date, 1, 0, 1, 1)
         self.date_edit_weigh_date = QDateEdit(self.gb_weigh_info)
         self.date_edit_weigh_date.setStyleSheet(config_info.date_edit_style)
         self.date_edit_weigh_date.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.gridLayout.addWidget(self.date_edit_weigh_date, 0, 1, 1, 1)
+        self.gridLayout.addWidget(self.date_edit_weigh_date, 1, 1, 1, 1)
         self.label_weigh_loc = QLabel(self.gb_weigh_info)
         self.label_weigh_loc.setStyleSheet(config_info.label_style)
         self.label_weigh_loc.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.gridLayout.addWidget(self.label_weigh_loc, 0, 2, 1, 1)
+        self.gridLayout.addWidget(self.label_weigh_loc, 1, 2, 1, 1)
         self.line_edit_weigh_loc = QLineEdit(self.gb_weigh_info)
         self.line_edit_weigh_loc.setStyleSheet(config_info.line_edit_style)
-        self.gridLayout.addWidget(self.line_edit_weigh_loc, 0, 3, 1, 1)
+        self.gridLayout.addWidget(self.line_edit_weigh_loc, 1, 3, 1, 1)
         self.label_aircraft_type = QLabel(self.gb_weigh_info)
         self.label_aircraft_type.setStyleSheet(config_info.label_style)
         self.label_aircraft_type.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.gridLayout.addWidget(self.label_aircraft_type, 0, 4, 1, 1)
+        self.gridLayout.addWidget(self.label_aircraft_type, 1, 4, 1, 1)
         self.line_edit_aircraft_type = QLineEdit(self.gb_weigh_info)
         self.line_edit_aircraft_type.setStyleSheet(config_info.line_edit_style)
-        self.gridLayout.addWidget(self.line_edit_aircraft_type, 0, 5, 1, 1)
+        self.gridLayout.addWidget(self.line_edit_aircraft_type, 1, 5, 1, 1)
         self.label_aircraft_id = QLabel(self.gb_weigh_info)
         self.label_aircraft_id.setStyleSheet(config_info.label_style)
         self.label_aircraft_id.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.gridLayout.addWidget(self.label_aircraft_id, 0, 6, 1, 1)
+        self.gridLayout.addWidget(self.label_aircraft_id, 1, 6, 1, 1)
         self.line_edit_aircraft_id = QLineEdit(self.gb_weigh_info)
         self.line_edit_aircraft_id.setStyleSheet(config_info.line_edit_style)
-        self.gridLayout.addWidget(self.line_edit_aircraft_id, 0, 7, 1, 1)
+        self.gridLayout.addWidget(self.line_edit_aircraft_id, 1, 7, 1, 1)
         self.v_layout.addWidget(self.gb_weigh_info)
 
         self.h_layout_tyre_weights = QHBoxLayout()
@@ -331,6 +342,8 @@ class AircraftWeighWidget(QFrame):
         self.dsb_empty_weight.setValue(aircraft.aircraft_empty_weight)
         self.dsb_empty_cg.setValue(aircraft.aircraft_empty_cg)
 
+        self.signal_weigh_info_change.emit()
+
     # 显示飞机的称重信息
     def display_weigh_info(self):
         if aircraft.weigh_info:
@@ -341,6 +354,7 @@ class AircraftWeighWidget(QFrame):
             self.line_edit_weigh_loc.setText(aircraft.weigh_info['weigh_location'])
             self.line_edit_aircraft_type.setText(aircraft.weigh_info['aircraft_type'])
             self.line_edit_aircraft_id.setText(aircraft.weigh_info['aircraft'])
+            self.line_edit_weigh_report_id.setText(aircraft.weigh_info['weigh_report_id'])
 
             # 设置第一次称重结果
             self.gb_tyre_weights_first.dsb_nose_gear_left.setValue(aircraft.weigh_info['weigh_tyre_nl'][0])
@@ -381,6 +395,7 @@ class AircraftWeighWidget(QFrame):
         aircraft.weigh_info['weigh_location'] = self.line_edit_weigh_loc.text()
         aircraft.weigh_info['aircraft_type'] = self.line_edit_aircraft_type.text()
         aircraft.weigh_info['aircraft'] = self.line_edit_aircraft_id.text()
+        aircraft.weigh_info['weigh_report_id'] = self.line_edit_weigh_report_id.text()
 
         # 设置第一次称重结果
         aircraft.weigh_info['weigh_tyre_nl'][0] = self.gb_tyre_weights_first.dsb_nose_gear_left.value()
@@ -425,3 +440,4 @@ class AircraftWeighWidget(QFrame):
         self.label_empty_weight.setText('试验空机重量')
         self.label_empty_cg.setText('试验空机重心')
         self.btn_cal_weight_cg.setText('计算重量重心')
+        self.label_weigh_report_id.setText('重量重心报告号')

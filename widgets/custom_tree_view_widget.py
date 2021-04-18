@@ -107,12 +107,12 @@ class WeightInfoTree(QTreeView):
         # self.setRootIsDecorated(False)
         # 设置表头
         self.header().setSectionResizeMode(QHeaderView.Stretch)
-        self.header().setDefaultAlignment(Qt.AlignCenter)
+        self.header().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         # 设置样式
         self.setStyleSheet(config_info.tree_view_style)
         # self.setAlternatingRowColors(True)
 
-        self.display_weight_info()
+        self.display_weight_info(data_collector.aircraft.get_aircraft_weight_info())
 
     # 重载绘制行的函数
     def drawRow(self, painter: QPainter, options: QStyleOptionViewItem, index: QModelIndex):
@@ -120,11 +120,11 @@ class WeightInfoTree(QTreeView):
         opt.rect.adjust(0, 0, 0, -5)
         QTreeView.drawRow(self, painter, opt, index)
 
-    def display_weight_info(self):
-        aircraft_weight_info = data_collector.aircraft.get_aircraft_weight_info()
+    def display_weight_info(self, aircraft_weight_info):
         self.tree_model = WeightInfoTreeModel(aircraft_weight_info, self,
                                               header=['项目', '重量(kg)', '力臂(mm)', '力矩(kg*mm)', '重心'])
         self.setModel(self.tree_model)
+        self.expandAll()
 
 
 # 显示两个变量对应关系的树控件
@@ -275,6 +275,33 @@ class UseItemTreeDelegate(QStyledItemDelegate):
         else:
             value = editor.text()
             model.setData(index, value)
+        self.signal_edit_finished.emit(index)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor_rect = option.rect
+        editor_rect.setHeight(editor_rect.height() - 5)
+        editor.setGeometry(editor_rect)
+
+
+# 为燃油消耗树写一个编辑代理
+class FuelConsumptionTreeDelegate(QStyledItemDelegate):
+    signal_edit_finished = pyqtSignal(QModelIndex)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def createEditor(self, parent, option, index):
+        editor = CustomDoubleSpinBox(parent, minimum=-1000000, maximum=1000000)
+        editor.setAlignment(Qt.AlignHCenter)
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.model().data(index)
+        editor.setValue(value)
+
+    def setModelData(self, editor, model, index):
+        value = editor.value()
+        model.setData(index, value)
         self.signal_edit_finished.emit(index)
 
     def updateEditorGeometry(self, editor, option, index):

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QFrame, QSplitter, QGroupBox, QHBoxLayout, QToolButton, QSpacerItem,
-                             QSizePolicy, QMessageBox)
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (QFrame, QSplitter, QGroupBox, QHBoxLayout, QVBoxLayout, QToolButton,
+                             QSpacerItem, QSizePolicy)
 
-from data_models import config_info
+from data_models import config_info, data_collector
 from widgets.custom_canvas import FuelConsumptionCanvas
 from widgets.custom_tree_view_widget import WeightInfoTree
 
@@ -24,6 +25,18 @@ class ResultInfoShowWidget(QFrame):
         self.fuel_curve_group_box = QGroupBox(self)
         self.fuel_curve_group_box.setStyleSheet(config_info.group_box_style)
         self.h_layout_fuel_curve = QHBoxLayout(self.fuel_curve_group_box)
+
+        self.v_layout_tool_button = QVBoxLayout()
+        self.btn_display_limit = QToolButton(self)
+        self.btn_display_limit.setIcon(QIcon(config_info.icon_select_aircraft))
+        self.btn_display_limit.setStyleSheet(config_info.button_with_icon_style)
+        self.btn_display_limit.setToolTip('显示包线限制')
+        self.btn_display_limit.setCheckable(True)
+        self.v_layout_tool_button.addWidget(self.btn_display_limit)
+        spacer_item = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.v_layout_tool_button.addItem(spacer_item)
+        self.h_layout_fuel_curve.addLayout(self.v_layout_tool_button)
+        
         self.fuel_consumption_canvas = FuelConsumptionCanvas(self)
         self.h_layout_fuel_curve.addWidget(self.fuel_consumption_canvas)
         self.splitter_record.addWidget(self.fuel_curve_group_box)
@@ -40,6 +53,10 @@ class ResultInfoShowWidget(QFrame):
         self.h_layout.addWidget(self.splitter_record)
 
         self.translate_ui()
+
+    def update_display_result(self, fuel_consumption_sum, cg_real_time, aircraft_weight_info):
+        self.fuel_consumption_canvas.refresh_fuel_consume_line_data(fuel_consumption_sum, cg_real_time)
+        self.weight_info.display_weight_info(aircraft_weight_info)
 
     def translate_ui(self):
         self.fuel_curve_group_box.setTitle('燃油消耗曲线')

@@ -1,4 +1,5 @@
 {
+    "weigh_report_id": "T-C817JB199",
     "aircraft_type": "C919",
     "aircraft": "10105",
     "weigh_method": "\u5730\u79e4\u79f0\u91cd\u6cd5",
@@ -9,7 +10,7 @@
         2838.0
     ],
     "weigh_tyre_nl": [
-        2512.0,
+        2527.0,
         2514.0
     ],
     "weigh_tyre_lo": [
@@ -32,6 +33,13 @@
     "weigh_pillar_lmr": 165.0,
     "weigh_pillar_lml": 172.0,
     "pitch_angle": -0.6,
-    "redundant_unit": [],
+    "redundant_unit": [
+        [
+            "\u6c34",
+            25.0,
+            6900.0,
+            172500.0
+        ]
+    ],
     "absence_unit": []
 }

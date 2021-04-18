@@ -148,13 +148,13 @@ class CG(object):
     def get_weigh_result(self, item_name: str = ''):
         if item_name:
             if item_name == '实测重量':
-                return self.Wr
+                return float(self.Wr)
             if item_name == '实测重心':
-                return self.Xr_
+                return float(self.Xr_)
             if item_name == '空机重量':
-                return self.Wt
+                return float(self.Wt)
             if item_name == '空机重心':
-                return self.Xt_
+                return float(self.Xt_)
         else:
             return None
 

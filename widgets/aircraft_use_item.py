@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import (QVBoxLayout, QGroupBox, QHBoxLayout, QToolButton, Q
 from data_models import config_info, data_collector
 from widgets.custom_tree_view_widget import UseItemTreeView, UseItemTreeDelegate
 from widgets.custom_tree_view_model import UseItemTreeModel
-from widgets.result_info_show_widget import ResultInfoShowWidget
 
 
 # 飞机使用项目控件
@@ -129,18 +128,3 @@ class AircraftUseItemWidget(QGroupBox):
         self.btn_add_item.setText('   添加   ')
         self.btn_del_item.setText('   删除   ')
         self.btn_submit.setText('   提交   ')
-
-
-class AircraftUseItemPage(QFrame):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.verticalLayout = QVBoxLayout(self)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.aircraft_use_item = AircraftUseItemWidget(self)
-        self.verticalLayout.addWidget(self.aircraft_use_item)
-        self.show_result_info_widget = ResultInfoShowWidget()
-        self.verticalLayout.addWidget(self.show_result_info_widget)
-        self.verticalLayout.setStretch(0, 1)
-        self.verticalLayout.setStretch(1, 1)

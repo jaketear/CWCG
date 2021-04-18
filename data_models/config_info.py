@@ -19,10 +19,13 @@ with open(config_file_path, 'r') as config_file_obj:
 # 软件名称
 soft_name = config_parser.get('general', 'soft_name')
 
-# 称重信息导出文件的默认路径
-default_weigh_info_export_dir = config_parser.get('general', 'default_weigh_info_export_dir')
-# 称重信息导入文件的默认路径
-default_weigh_info_import_dir = config_parser.get('general', 'default_weigh_info_import_dir')
+# 数值显示精度
+display_number_precision = int(config_parser.get('general', 'display_number_precision'))
+
+# 重量平衡表、配载单、重量重心报告保存路径
+weigh_report_save_dir = config_parser.get('general', 'weigh_report_save_dir')
+als_report_save_dir = config_parser.get('general', 'als_report_save_dir')
+wab_sheet_save_dir = config_parser.get('general', 'wab_sheet_save_dir')
 
 # 图标
 icon_main_window = config_parser.get('icon_path', 'icon_main_window')
@@ -90,8 +93,9 @@ button_style = 'QToolButton { max-height: %dpx; min-height: %dpx;' % (button_hei
 button_with_icon_style = 'QToolButton { max-height: %dpx; min-height: %dpx;' % (button_height, button_height) +\
                          'max-width: %dpx; min-width: %dpx;' % (button_height, button_height) +\
                          'background-color: %s;' % button_color +\
-                         ' border-radius: 6px; icon-size: %dpx}' % button_icon_size +\
-                         'QToolButton:pressed {padding-left: 2px; padding-top: 2px}' \
+                         'border-radius: 6px; icon-size: %dpx}' % button_icon_size +\
+                         'QToolButton:pressed {padding-left: 2px; padding-top: 2px;}' \
+                         'QToolButton:checked {background-color: %s;}' % button_hover_color +\
                          'QToolButton:hover {background-color: %s;}' % button_hover_color
 
 # 标签样式
@@ -149,6 +153,12 @@ double_spin_style = 'QDoubleSpinBox { background-color: transparent; ' \
                     'font-size: %dpx;' % general_tip_font_size +\
                     'color: black; border-bottom: 2px solid %s; border-top: none}' % line_edit_color
 
+fuel_weight_double_spin_style = 'QDoubleSpinBox { background-color: transparent; ' \
+                                'font-family: \'Microsoft YaHei UI\';' +\
+                                'min-width: %dpx; max-width: %dpx;' % (label_width, label_width) +\
+                                'font-size: %dpx;' % general_tip_font_size +\
+                                'color: black; border-bottom: 2px solid %s; border-top: none}' % line_edit_color
+
 
 # 设置配置信息
 def set_config_info(**kwargs):
@@ -159,11 +169,14 @@ def set_config_info(**kwargs):
         for key in kwargs:
             if set_config_parser.has_option('general', key):
                 set_config_parser.set('general', key, kwargs[key])
-            if key == 'default_weigh_info_export_dir':
-                global default_weigh_info_export_dir
-                default_weigh_info_export_dir = kwargs[key]
-            if key == 'default_weigh_info_import_dir':
-                global default_weigh_info_import_dir
-                default_weigh_info_import_dir = kwargs[key]
+            if key == 'weigh_report_save_dir':
+                global weigh_report_save_dir
+                weigh_report_save_dir = kwargs[key]
+            if key == 'als_report_save_dir':
+                global als_report_save_dir
+                als_report_save_dir = kwargs[key]
+            if key == 'wab_sheet_save_dir':
+                global wab_sheet_save_dir
+                wab_sheet_save_dir = kwargs[key]
 
         set_config_parser.write(f)

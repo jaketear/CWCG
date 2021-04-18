@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QPaintEvent, QPainterPath, QFont
 from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QVBoxLayout, QLabel, QSpacerItem,
-                             QSizePolicy, QSlider, QDoubleSpinBox, QAbstractSpinBox,
-                             QGroupBox)
+                             QSizePolicy, QMessageBox, QDoubleSpinBox, QAbstractSpinBox,
+                             QGroupBox, QGridLayout, QToolButton, QSplitter)
 
 from data_models import data_collector, config_info
-from widgets.result_info_show_widget import ResultInfoShowWidget
+from widgets.custom_tree_view_widget import UseItemTreeView, FuelConsumptionTreeDelegate
+from widgets.custom_tree_view_model import FuelConsumptionTreeModel
 
 
 class AircraftFuelTankSketch(QFrame):
@@ -180,162 +181,284 @@ class AircraftFuelTankSketch(QFrame):
             painter.drawPath(self.aircraft_right_fuel_path - fill_path)
 
 
+# 自定义文本控件
+class CustomLabel(QLabel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setStyleSheet(config_info.label_style)
+
+
+# 自定义的数值输入框
+class CustomDoubleSpinBox(QDoubleSpinBox):
+    def __init__(self, parent=None, decimals=1, minimum=0, maximum=1000000, suffix='  kg'):
+        super().__init__(parent)
+
+        self.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.setDecimals(decimals)
+        self.setMaximum(maximum)
+        self.setMinimum(minimum)
+        self.setSuffix(suffix)
+        self.setStyleSheet(config_info.fuel_weight_double_spin_style)
+
+
+class FuelConsumptionOrder(QGroupBox):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setStyleSheet(config_info.group_box_style)
+
+        self.verticalLayout = QVBoxLayout(self)
+        self.horizontalLayout = QHBoxLayout()
+        self.btn_add_item = QToolButton(self)
+        self.btn_add_item.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        self.btn_add_item.setStyleSheet(config_info.button_style)
+        self.btn_add_item.setFocusPolicy(Qt.NoFocus)
+        self.horizontalLayout.addWidget(self.btn_add_item)
+        self.btn_del_item = QToolButton(self)
+        self.btn_del_item.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        self.btn_del_item.setStyleSheet(config_info.button_style)
+        self.btn_del_item.setFocusPolicy(Qt.NoFocus)
+        self.horizontalLayout.addWidget(self.btn_del_item)
+        spacer_item = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacer_item)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+
+        self.tree_view_fuel_consumption_list = UseItemTreeView(self)
+        self.verticalLayout.addWidget(self.tree_view_fuel_consumption_list)
+        self.tree_model_fuel_consumption_list = FuelConsumptionTreeModel(list(), self.tree_view_fuel_consumption_list)
+        self.tree_view_fuel_consumption_list.setModel(self.tree_model_fuel_consumption_list)
+        self.tree_delegate = FuelConsumptionTreeDelegate()
+        self.tree_view_fuel_consumption_list.setItemDelegate(self.tree_delegate)
+
+        self.translate_ui()
+        # 连接信号与槽
+        self.btn_add_item.clicked.connect(self.add_fuel_consumption_point)
+        self.btn_del_item.clicked.connect(self.del_fuel_consumption_point)
+
+    # 增加一个燃油消耗转折点
+    def add_fuel_consumption_point(self, flags=False, left_tank=0, center_tank=0, right_tank=0):
+        position = self.tree_model_fuel_consumption_list.rowCount()
+        status = self.tree_model_fuel_consumption_list.insertRows(position, 1)
+        if status:
+            widget_index = self.tree_model_fuel_consumption_list.index(position, 0)
+            item = self.tree_model_fuel_consumption_list.getItem(widget_index)
+            item.set_data(0, left_tank)
+            item.set_data(1, center_tank)
+            item.set_data(2, right_tank)
+
+    # 删除燃油消耗转折点
+    def del_fuel_consumption_point(self):
+        cur_index = self.tree_view_fuel_consumption_list.currentIndex()
+        if cur_index.row() != -1:
+            message = QMessageBox.warning(self, '删除燃油消耗转折点', '确定要删除燃油消耗转折点吗?',
+                                          QMessageBox.Yes | QMessageBox.No)
+            if message == QMessageBox.Yes:
+                self.tree_model_fuel_consumption_list.removeRow(cur_index.row())
+
+    def translate_ui(self):
+        self.setTitle('')
+        self.btn_add_item.setText('   添加   ')
+        self.btn_del_item.setText('   删除   ')
+
+
 class AircraftFuelTankControl(QFrame):
     signal_fuel_change = pyqtSignal(float, float, float)
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        font = QFont()
-        font.setFamily('微软雅黑')
-        self.setFont(font)
+        self.verticalLayout = QVBoxLayout(self)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.gb_fuel_weight = QGroupBox(self)
+        self.gridLayout = QGridLayout(self.gb_fuel_weight)
+        self.btn_tran_kg_lb = QToolButton(self.gb_fuel_weight)
+        self.btn_tran_kg_lb.setStyleSheet(config_info.button_style)
+        self.gridLayout.addWidget(self.btn_tran_kg_lb, 0, 0, 1, 1)
+        self.label_left_fuel_tank = CustomLabel(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.label_left_fuel_tank, 0, 1, 1, 1)
+        self.label_center_fuel_tank = CustomLabel(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.label_center_fuel_tank, 0, 2, 1, 1)
+        self.label_right_fuel_tank = CustomLabel(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.label_right_fuel_tank, 0, 3, 1, 1)
+        self.label_total_fuel_weight = CustomLabel(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.label_total_fuel_weight, 0, 4, 1, 1)
+        self.label_display_fuel_weight = CustomLabel(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.label_display_fuel_weight, 1, 0, 1, 1)
+        self.dsb_left_display = CustomDoubleSpinBox(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.dsb_left_display, 1, 1, 1, 1)
+        self.dsb_center_display = CustomDoubleSpinBox(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.dsb_center_display, 1, 2, 1, 1)
+        self.dsb_right_display = CustomDoubleSpinBox(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.dsb_right_display, 1, 3, 1, 1)
+        self.dsb_total_display = CustomDoubleSpinBox(self.gb_fuel_weight)
+        self.dsb_total_display.setReadOnly(True)
+        self.gridLayout.addWidget(self.dsb_total_display, 1, 4, 1, 1)
+        self.label_real_fuel_weight = CustomLabel(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.label_real_fuel_weight, 2, 0, 1, 1)
+        self.dsb_left_actual = CustomDoubleSpinBox(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.dsb_left_actual, 2, 1, 1, 1)
+        self.dsb_center_actual = CustomDoubleSpinBox(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.dsb_center_actual, 2, 2, 1, 1)
+        self.dsb_right_actual = CustomDoubleSpinBox(self.gb_fuel_weight)
+        self.gridLayout.addWidget(self.dsb_right_actual, 2, 3, 1, 1)
+        self.dsb_total_actual = CustomDoubleSpinBox(self.gb_fuel_weight)
+        self.dsb_total_actual.setReadOnly(True)
+        self.gridLayout.addWidget(self.dsb_total_actual, 2, 4, 1, 1)
+        self.verticalLayout.addWidget(self.gb_fuel_weight)
+        self.gb_fuel_consumption_order = FuelConsumptionOrder(self)
+        self.verticalLayout.addWidget(self.gb_fuel_consumption_order)
+        spacer_item = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacer_item)
 
-        self.resize(719, 424)
-        self.horizontalLayout_4 = QHBoxLayout(self)
-        self.verticalLayout = QVBoxLayout()
-        self.label_left_tank_limit = QLabel(self)
-        self.label_left_tank_limit.setAlignment(Qt.AlignCenter)
-        self.verticalLayout.addWidget(self.label_left_tank_limit)
-        self.horizontalLayout = QHBoxLayout()
-        spacer_item = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacer_item)
-        self.vertical_slider_left_tank = QSlider(self)
-        self.vertical_slider_left_tank.setMaximum(100)
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        size_policy.setHorizontalStretch(0)
-        size_policy.setVerticalStretch(0)
-        size_policy.setHeightForWidth(self.vertical_slider_left_tank.sizePolicy().hasHeightForWidth())
-        self.vertical_slider_left_tank.setSizePolicy(size_policy)
-        self.vertical_slider_left_tank.setOrientation(Qt.Vertical)
-        self.vertical_slider_left_tank.setTickPosition(QSlider.TicksAbove)
-        self.horizontalLayout.addWidget(self.vertical_slider_left_tank)
-        spacer_item = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacer_item)
-        self.verticalLayout.addLayout(self.horizontalLayout)
-        self.label_left_tank = QLabel(self)
-        self.label_left_tank.setAlignment(Qt.AlignCenter)
-        self.verticalLayout.addWidget(self.label_left_tank)
-        self.horizontalLayout_4.addLayout(self.verticalLayout)
-        self.double_spinBox_left_tank = QDoubleSpinBox(self)
-        self.double_spinBox_left_tank.setFrame(QFrame.NoFrame)
-        self.double_spinBox_left_tank.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.double_spinBox_left_tank.setDecimals(1)
-        self.double_spinBox_left_tank.setMaximum(100000.0)
-        self.double_spinBox_left_tank.setSingleStep(0.1)
-        self.horizontalLayout_4.addWidget(self.double_spinBox_left_tank)
-        self.verticalLayout_2 = QVBoxLayout()
-        self.label_center_tank_limit = QLabel(self)
-        self.label_center_tank_limit.setAlignment(Qt.AlignCenter)
-        self.verticalLayout_2.addWidget(self.label_center_tank_limit)
-        self.horizontalLayout_2 = QHBoxLayout()
-        spacer_item = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout_2.addItem(spacer_item)
-        self.vertical_slider_center_tank = QSlider(self)
-        self.vertical_slider_center_tank.setMaximum(100)
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        size_policy.setHorizontalStretch(0)
-        size_policy.setVerticalStretch(0)
-        size_policy.setHeightForWidth(self.vertical_slider_center_tank.sizePolicy().hasHeightForWidth())
-        self.vertical_slider_center_tank.setSizePolicy(size_policy)
-        self.vertical_slider_center_tank.setOrientation(Qt.Vertical)
-        self.vertical_slider_center_tank.setTickPosition(QSlider.TicksAbove)
-        self.horizontalLayout_2.addWidget(self.vertical_slider_center_tank)
-        spacer_item = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout_2.addItem(spacer_item)
-        self.verticalLayout_2.addLayout(self.horizontalLayout_2)
-        self.label_center_tank = QLabel(self)
-        self.label_center_tank.setAlignment(Qt.AlignCenter)
-        self.verticalLayout_2.addWidget(self.label_center_tank)
-        self.horizontalLayout_4.addLayout(self.verticalLayout_2)
-        self.double_spinBox_center_tank = QDoubleSpinBox(self)
-        self.double_spinBox_center_tank.setFrame(QFrame.NoFrame)
-        self.double_spinBox_center_tank.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.double_spinBox_center_tank.setDecimals(1)
-        self.double_spinBox_center_tank.setMaximum(100000.0)
-        self.double_spinBox_center_tank.setSingleStep(0.1)
-        self.horizontalLayout_4.addWidget(self.double_spinBox_center_tank)
-        self.verticalLayout_3 = QVBoxLayout()
-        self.label_right_tank_limit = QLabel(self)
-        self.label_right_tank_limit.setAlignment(Qt.AlignCenter)
-        self.verticalLayout_3.addWidget(self.label_right_tank_limit)
-        self.horizontalLayout_3 = QHBoxLayout()
-        spacer_item = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacer_item)
-        self.vertical_slider_right_tank = QSlider(self)
-        self.vertical_slider_right_tank.setMaximum(100)
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        size_policy.setHorizontalStretch(0)
-        size_policy.setVerticalStretch(0)
-        size_policy.setHeightForWidth(self.vertical_slider_right_tank.sizePolicy().hasHeightForWidth())
-        self.vertical_slider_right_tank.setSizePolicy(size_policy)
-        self.vertical_slider_right_tank.setOrientation(Qt.Vertical)
-        self.vertical_slider_right_tank.setTickPosition(QSlider.TicksAbove)
-        self.horizontalLayout_3.addWidget(self.vertical_slider_right_tank)
-        spacer_item = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacer_item)
-        self.verticalLayout_3.addLayout(self.horizontalLayout_3)
-        self.label_right_tank = QLabel(self)
-        self.label_right_tank.setAlignment(Qt.AlignCenter)
-        self.verticalLayout_3.addWidget(self.label_right_tank)
-        self.horizontalLayout_4.addLayout(self.verticalLayout_3)
-        self.double_spinBox_right_tank = QDoubleSpinBox(self)
-        self.double_spinBox_right_tank.setFrame(QFrame.NoFrame)
-        self.double_spinBox_right_tank.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.double_spinBox_right_tank.setDecimals(1)
-        self.double_spinBox_right_tank.setMaximum(100000.0)
-        self.double_spinBox_right_tank.setSingleStep(0.1)
-        self.horizontalLayout_4.addWidget(self.double_spinBox_right_tank)
+        # 为了批量化处理
+        self.dsb_list = [self.dsb_left_display, self.dsb_center_display, self.dsb_right_display, self.dsb_total_display,
+                         self.dsb_left_actual, self.dsb_center_actual, self.dsb_right_actual, self.dsb_total_actual]
+        self.dsb_flag_list = [('left', 'display'), ('central', 'display'), ('right', 'display'), ('total', 'display'),
+                              ('left', 'actual'), ('central', 'actual'), ('right', 'actual'), ('total', 'actual')]
 
-        self.translate()
-        # self.display_limit_fuel_value()
+        self.translate_ui()
 
-        self.vertical_slider_left_tank.valueChanged.connect(self.change_fuel_display)
-        self.vertical_slider_center_tank.valueChanged.connect(self.change_fuel_display)
-        self.vertical_slider_right_tank.valueChanged.connect(self.change_fuel_display)
+        # 进行单位切换
+        self.btn_tran_kg_lb.clicked.connect(self.trans_kg_lb)
+        for i, dsb in enumerate(self.dsb_list):
+            if (i + 1) % 4 != 0:
+                dsb.editingFinished.connect(self.fuel_tank_fuel_changed)
 
-    def change_fuel_display(self, value):
-        sender = QObject.sender(self)
-        if sender == self.vertical_slider_left_tank:
-            fuel = value * data_collector.aircraft.fuel_info['left_limit'] / 100
-            # 更新data_collector中的数据
-            data_collector.aircraft.set_fuel_info(left=fuel)
-            # 更新控制条的位置
-            self.double_spinBox_left_tank.setValue(fuel)
-        if sender == self.vertical_slider_center_tank:
-            fuel = value * data_collector.aircraft.fuel_info['center_limit'] / 100
-            data_collector.aircraft.set_fuel_info(central=fuel)
-            self.double_spinBox_center_tank.setValue(fuel)
-        if sender == self.vertical_slider_right_tank:
-            fuel = value * data_collector.aircraft.fuel_info['right_limit'] / 100
-            data_collector.aircraft.set_fuel_info(right=fuel)
-            self.double_spinBox_right_tank.setValue(fuel)
-
-        self.signal_fuel_change.emit(self.vertical_slider_center_tank.value() / 100,
-                                     self.vertical_slider_left_tank.value() / 100,
-                                     self.vertical_slider_right_tank.value() / 100)
-
-    # 显示限制燃油值
-    def display_limit_fuel_value(self):
-        self.label_left_tank_limit.setText('%.1f kg' % data_collector.aircraft.fuel_info['left_limit'])
-        self.label_center_tank_limit.setText('%.1f kg' % data_collector.aircraft.fuel_info['center_limit'])
-        self.label_right_tank_limit.setText('%.1f kg' % data_collector.aircraft.fuel_info['right_limit'])
+    # 计算油量百分比
+    def cal_fuel_weight_percent(self):
+        unit = self.dsb_center_actual.suffix()
+        if unit == '  kg':
+            left_tank = self.dsb_left_actual.value() / data_collector.aircraft.fuel_limit['左机翼油箱限制']
+            center_tank = self.dsb_center_actual.value() / data_collector.aircraft.fuel_limit['中央翼油箱限制']
+            right_tank = self.dsb_right_actual.value() / data_collector.aircraft.fuel_limit['右机翼油箱限制']
+            return left_tank, center_tank, right_tank
+        if unit == '  lb':
+            left_tank = self.dsb_left_actual.value() * 0.454 / data_collector.aircraft.fuel_limit['左机翼油箱限制']
+            center_tank = self.dsb_center_actual.value() * 0.454 / data_collector.aircraft.fuel_limit['中央翼油箱限制']
+            right_tank = self.dsb_right_actual.value() * 0.454 / data_collector.aircraft.fuel_limit['右机翼油箱限制']
+            return left_tank, center_tank, right_tank
 
     # 显示燃油量
     def display_fuel_value(self):
-        self.vertical_slider_left_tank.setValue(
-            data_collector.aircraft.fuel_info['left'] / data_collector.aircraft.fuel_info['left_limit'] * 100)
-        self.vertical_slider_center_tank.setValue(
-            data_collector.aircraft.fuel_info['central'] / data_collector.aircraft.fuel_info['center_limit'] * 100)
-        self.vertical_slider_right_tank.setValue(
-            data_collector.aircraft.fuel_info['right'] / data_collector.aircraft.fuel_info['right_limit'] * 100)
+        self.dsb_left_actual.setValue(data_collector.aircraft.fuel_info['left'])
+        self.dsb_center_actual.setValue(data_collector.aircraft.fuel_info['central'])
+        self.dsb_right_actual.setValue(data_collector.aircraft.fuel_info['right'])
+        self.dsb_total_actual.setValue(data_collector.aircraft.fuel_info['left'] +
+                                       data_collector.aircraft.fuel_info['central'] +
+                                       data_collector.aircraft.fuel_info['right'])
 
-    def translate(self):
-        self.label_left_tank_limit.setText("TextLabel")
-        self.label_left_tank.setText("左机翼油箱")
-        self.label_center_tank_limit.setText("TextLabel")
-        self.label_center_tank.setText("中央翼油箱")
-        self.label_right_tank_limit.setText("TextLabel")
-        self.label_right_tank.setText("右机翼油箱")
+        # 显示油量计算
+        fuel_tank_value = data_collector.aircraft.get_fuel_tank_fuel_weight('display')
+        self.dsb_left_display.setValue(fuel_tank_value[0])
+        self.dsb_center_display.setValue(fuel_tank_value[1])
+        self.dsb_right_display.setValue(fuel_tank_value[2])
+        self.dsb_total_display.setValue(fuel_tank_value[0] + fuel_tank_value[1] + fuel_tank_value[2])
+
+        l, c, r = self.cal_fuel_weight_percent()
+        # print('left: %f center: %f right: %f' % (l, c, r))
+        self.signal_fuel_change.emit(c, l, r)
+
+    # 油箱油量被改变
+    def fuel_tank_fuel_changed(self):
+        sender = self.sender()
+        # 判断是否是修改了油量
+        if isinstance(sender, CustomDoubleSpinBox) and sender in self.dsb_list:
+            # 判断修改了哪个油量
+            index = self.dsb_list.index(sender)
+            fuel_tank, fuel_type = self.dsb_flag_list[index]
+
+            # 判断油量是否超限
+            actual_fuel = None
+            is_over_limit = False
+            limit_value = None
+            try:
+                if fuel_type == 'actual':
+                    actual_fuel = sender.value()
+                if fuel_type == 'display':
+                    actual_fuel = data_collector.aircraft.fuel_display_actual_relation(sender.value(),
+                                                                                       fuel_type, fuel_tank)
+                # 根据实际油量判断是否超限
+                if fuel_tank == 'left' and actual_fuel > data_collector.aircraft.fuel_limit['左机翼油箱限制']:
+                    is_over_limit = True
+                    limit_value = data_collector.aircraft.fuel_limit['左机翼油箱限制']
+                if fuel_tank == 'central' and actual_fuel > data_collector.aircraft.fuel_limit['中央翼油箱限制']:
+                    is_over_limit = True
+                    limit_value = data_collector.aircraft.fuel_limit['中央翼油箱限制']
+                if fuel_tank == 'right' and actual_fuel > data_collector.aircraft.fuel_limit['右机翼油箱限制']:
+                    is_over_limit = True
+                    limit_value = data_collector.aircraft.fuel_limit['右机翼油箱限制']
+            except IndexError:
+                # 超出插值范围
+                is_over_limit = True
+                if fuel_tank == 'left':
+                    limit_value = data_collector.aircraft.fuel_limit['左机翼油箱限制']
+                if fuel_tank == 'central':
+                    limit_value = data_collector.aircraft.fuel_limit['中央翼油箱限制']
+                if fuel_tank == 'right':
+                    limit_value = data_collector.aircraft.fuel_limit['右机翼油箱限制']
+            # 如果超限则提示超了什么限制并恢复原先的显示
+            if is_over_limit:
+                if fuel_type == 'actual':
+                    sender.setValue(data_collector.aircraft.fuel_info[fuel_tank])
+                if fuel_type == 'display':
+                    d_value = data_collector.aircraft.fuel_display_actual_relation(
+                        data_collector.aircraft.fuel_info[fuel_tank], 'actual', fuel_tank)
+                    sender.setValue(d_value)
+                QMessageBox.information(self, '提示', '输入的燃油量超出限制: %.1f kg/ %.1f lb' % (limit_value,
+                                                                                      limit_value / 0.454))
+                return
+
+            # 如果修改了实际油量的处理
+            if fuel_type == 'actual':
+                # 更改飞机对象中的实际油量
+                data_collector.aircraft.fuel_info[fuel_tank] = sender.value()
+                # 相应的更改显示油量
+                display_value = data_collector.aircraft.fuel_display_actual_relation(sender.value(),
+                                                                                     fuel_type, fuel_tank)
+                self.dsb_list[index - 4].setValue(display_value)
+            # 如果修改了显示油量的处理
+            if fuel_type == 'display':
+                actual_value = data_collector.aircraft.fuel_display_actual_relation(sender.value(),
+                                                                                    fuel_type, fuel_tank)
+                data_collector.aircraft.fuel_info[fuel_tank] = actual_value
+                self.dsb_list[index + 4].setValue(actual_value)
+            # 更新总油量
+            self.dsb_total_actual.setValue(data_collector.aircraft.fuel_info['left'] +
+                                           data_collector.aircraft.fuel_info['central'] +
+                                           data_collector.aircraft.fuel_info['right'])
+            fuel_tank_value = data_collector.aircraft.get_fuel_tank_fuel_weight('display')
+            self.dsb_total_display.setValue(fuel_tank_value[0] + fuel_tank_value[1] + fuel_tank_value[2])
+
+            l, c, r = self.cal_fuel_weight_percent()
+            self.signal_fuel_change.emit(c, l, r)
+
+    # 单位换算
+    def trans_kg_lb(self):
+        unit = self.dsb_center_actual.suffix()
+        if unit == '  kg':
+            # 转换成lb
+            for dsb in self.dsb_list:
+                value = dsb.value()
+                dsb.setValue(value / 0.454)
+                dsb.setSuffix('  lb')
+        if unit == '  lb':
+            # 转换成lb
+            for dsb in self.dsb_list:
+                value = dsb.value()
+                dsb.setValue(value * 0.454)
+                dsb.setSuffix('  kg')
+
+    def translate_ui(self):
+        self.gb_fuel_weight.setTitle("燃油")
+        self.btn_tran_kg_lb.setText("kg与lb切换")
+        self.label_left_fuel_tank.setText("左机翼油箱")
+        self.label_center_fuel_tank.setText("中央翼油箱")
+        self.label_right_fuel_tank.setText("右机翼油箱")
+        self.label_total_fuel_weight.setText("总油量")
+        self.label_display_fuel_weight.setText("显示油量")
+        self.label_real_fuel_weight.setText("实际油量")
+        self.gb_fuel_consumption_order.setTitle("燃油消耗顺序")
 
 
 class AircraftFuelTankWidget(QGroupBox):
@@ -347,12 +470,18 @@ class AircraftFuelTankWidget(QGroupBox):
         self.setStyleSheet(config_info.group_box_style)
 
         self.h_layout = QHBoxLayout(self)
+        self.h_layout.setContentsMargins(0, 0, 6, 6)
+
+        self.splitter_fuel_setting = QSplitter(self)
+        self.splitter_fuel_setting.setOrientation(Qt.Horizontal)
         self.fuel_tank_sketch = AircraftFuelTankSketch()
-        self.h_layout.addWidget(self.fuel_tank_sketch)
+        self.splitter_fuel_setting.addWidget(self.fuel_tank_sketch)
         self.fuel_tank_control = AircraftFuelTankControl()
-        self.h_layout.addWidget(self.fuel_tank_control)
-        self.h_layout.setStretch(0, 4)
-        self.h_layout.setStretch(1, 1)
+        self.splitter_fuel_setting.addWidget(self.fuel_tank_control)
+
+        self.splitter_fuel_setting.setStretchFactor(0, 3)
+        self.splitter_fuel_setting.setStretchFactor(1, 2)
+        self.h_layout.addWidget(self.splitter_fuel_setting)
 
         self.fuel_tank_control.signal_fuel_change.connect(self.fuel_tank_sketch.change_fuel_weight)
 
@@ -360,22 +489,5 @@ class AircraftFuelTankWidget(QGroupBox):
 
     # 更新燃油初始状态
     def update_fuel_initial_status(self):
-        # 更新燃油限制值
-        self.fuel_tank_control.display_limit_fuel_value()
         # 更新初始燃油重量
         self.fuel_tank_control.display_fuel_value()
-
-
-class AircraftFuelTankPage(QFrame):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.verticalLayout = QVBoxLayout(self)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.aircraft_fuel_tank = AircraftFuelTankWidget(self)
-        self.verticalLayout.addWidget(self.aircraft_fuel_tank)
-        self.show_result_info_widget = ResultInfoShowWidget()
-        self.verticalLayout.addWidget(self.show_result_info_widget)
-        self.verticalLayout.setStretch(0, 1)
-        self.verticalLayout.setStretch(1, 1)
