@@ -2,7 +2,7 @@
 
 import os
 
-from PyQt5.QtCore import Qt, QDate
+from PyQt5.QtCore import Qt, QDate, pyqtSignal
 from PyQt5.QtWidgets import (QGroupBox, QToolButton, QVBoxLayout, QSizePolicy, QSpacerItem,
                              QFileDialog, QGridLayout, QLabel, QLineEdit, QDateEdit,
                              QAbstractSpinBox, QDoubleSpinBox, QMessageBox)
@@ -156,6 +156,8 @@ class WABSheet(QGroupBox):
 
 # 报告控件
 class AircraftReportsWidget(QGroupBox):
+    signal_export_wab_sheet = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -175,6 +177,19 @@ class AircraftReportsWidget(QGroupBox):
         self.wab_sheet.btn_wab_sheet.clicked.connect(self.select_save_dir)
         self.als_report.btn_als_report.clicked.connect(self.select_save_dir)
 
+    def get_wab_sheet_info(self):
+        aircraft = self.wab_sheet.line_edit_aircraft.text()
+        wab_id = self.wab_sheet.line_edit_wab_id.text()
+        wab_version = self.wab_sheet.line_edit_wab_version.text()
+        task_id = self.wab_sheet.line_edit_task_id.text()
+        weigh_basis = self.wab_sheet.line_edit_weigh_basis.text()
+        als_basis = self.wab_sheet.line_edit_als_basis.text()
+        test_type = self.wab_sheet.line_edit_test_type.text()
+        crew_num = self.wab_sheet.dsb_crew_num.text()
+        date = self.wab_sheet.date_edit_weigh_date.date().toString('yyyy/MM/dd')
+
+        return save_dir, aircraft, wab_id, wab_version, task_id, weigh_basis, als_basis, test_type, crew_num, date
+
     # 选择保存路径
     def select_save_dir(self):
         sender = self.sender()
@@ -193,15 +208,8 @@ class AircraftReportsWidget(QGroupBox):
                 config_info.set_config_info(als_report_save_dir=save_dir)
             if sender == self.wab_sheet.btn_wab_sheet:
                 config_info.set_config_info(wab_sheet_save_dir=save_dir)
-                aircraft = self.wab_sheet.line_edit_aircraft.text()
-                wab_id = self.wab_sheet.line_edit_wab_id.text()
-                wab_version = self.wab_sheet.line_edit_wab_version.text()
-                task_id = self.wab_sheet.line_edit_task_id.text()
-                weigh_basis = self.wab_sheet.line_edit_weigh_basis.text()
-                als_basis = self.wab_sheet.line_edit_als_basis.text()
-                test_type = self.wab_sheet.line_edit_test_type.text()
-                crew_num = self.wab_sheet.dsb_crew_num.text()
-                date = self.wab_sheet.date_edit_weigh_date.date().toString('yyyy/MM/dd')
+                self.signal_export_wab_sheet.emit()
+
                 result_tip = weightBalanceSheet.export_wab_sheet(save_dir, aircraft, wab_id, wab_version,
                                                                  task_id, weigh_basis, als_basis, test_type,
                                                                  crew_num, date)

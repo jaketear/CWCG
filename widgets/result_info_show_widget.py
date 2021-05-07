@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QFrame, QSplitter, QGroupBox, QHBoxLayout, QVBoxLayout, QToolButton,
@@ -53,6 +55,11 @@ class ResultInfoShowWidget(QFrame):
         self.h_layout.addWidget(self.splitter_record)
 
         self.translate_ui()
+
+    # 获取燃油消耗曲线的图片
+    def get_fuel_consumption_curve(self):
+        self.fuel_consumption_canvas.fig.savefig(
+            config_info.current_aircraft_info_save_dir + os.sep + 'fuel_consumption_curve.png')
 
     def update_display_result(self, fuel_consumption_sum, cg_real_time, aircraft_weight_info):
         self.fuel_consumption_canvas.refresh_fuel_consume_line_data(fuel_consumption_sum, cg_real_time)

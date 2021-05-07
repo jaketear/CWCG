@@ -2,7 +2,7 @@
     "stowage_load": {
         "operation_items": [
             [
-                "\u9a7e\u9a76\u5458(2\u540d)",
+                "\u9a7e\u9a76\u5458",
                 150.0,
                 5990.0,
                 898500.0
@@ -35,7 +35,7 @@
         "loads": []
     },
     "fuel": {
-        "left": 3050.9,
+        "left": 3042.4,
         "central": 8332.0,
         "right": 3050.9
     }

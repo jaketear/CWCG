@@ -16,7 +16,7 @@ from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
 from docx.oxml.ns import qn
 
-# from data_models import data_collector
+from data_models.data_collector import aircraft as af
 
 #
 # class WeightBalanceSheet(object):
@@ -28,6 +28,7 @@ from docx.oxml.ns import qn
 
 def export_wab_sheet(save_dir, aircraft, wab_id, wab_version, task_id, weigh_basis, als_basis,
                      test_type, crew_num, date):
+    aircraft_weight_info = af.get_aircraft_weight_info()
     records = {'机型/架机：': aircraft,
                '重量平衡表编号：': wab_id,
                '重量平衡表版本：': wab_version}
@@ -37,19 +38,27 @@ def export_wab_sheet(save_dir, aircraft, wab_id, wab_version, task_id, weigh_bas
     records3 = {'试验内容：': test_type,
                 '上机人数': crew_num,
                 '编制日期：': date}
-    records4 = {'试验空机重量(W)':
-                    {'说明/备注': '', '重量(kg)': '46349', '力臂(mm )': '20593', '力矩(kg*mm)': '954492117', '重心': '17.7'},
-                '驾驶员':
-                    {'说明/备注': '2×75 kg', '重量(kg)': '150', '力臂(mm )': '5990', '力矩(kg*mm)': '898500', '重心': ''},
-                '观察员':
-                    {'说明/备注': '75 kg', '重量(kg)': '75', '力臂(mm )': '6900', '力矩(kg*mm)': '517500', '重心': ''},
-                '试飞工程师A、B ':
-                    {'说明/备注': '2×75 kg', '重量(kg)': '150', '力臂(mm )': '21442', '力矩(kg*mm)': '3216270', '重心': ''},
-                '试飞工程师C':
-                    {'说明/备注': '75 kg', '重量(kg)': '75', '力臂(mm )': '21459', '力矩(kg*mm)': '1609448', '重心': ''},
-                '机组行李':
-                    {'说明/备注': '', '重量(kg)': '60', '力臂(mm )': '8417', '力矩(kg*mm)': '505020', '重心': ''}
-                }
+    test_empty_weight = aircraft_weight_info['major_aircraft_weight']['test_empty_weight']
+    records4 = {'试验空机重量(W)': {'说明/备注': '', '重量(kg)': str(test_empty_weight[1]),
+                              '力臂(mm )': str(test_empty_weight[2]),
+                              '力矩(kg*mm)': str(test_empty_weight[3]),
+                              '重心': str(test_empty_weight[4])}}
+    for item in aircraft_weight_info['operation_items']:
+        records4[item[0]] = {'说明/备注': '', '重量(kg)': str(item[1]), '力臂(mm )': str(item[2]),
+                             '力矩(kg*mm)': str(item[3]), '重心': ''}
+    # records4 = {'试验空机重量(W)':
+    #                 {'说明/备注': '', '重量(kg)': '46349', '力臂(mm )': '20593', '力矩(kg*mm)': '954492117', '重心': '17.7'},
+    #             '驾驶员':
+    #                 {'说明/备注': '2×75 kg', '重量(kg)': '150', '力臂(mm )': '5990', '力矩(kg*mm)': '898500', '重心': ''},
+    #             '观察员':
+    #                 {'说明/备注': '75 kg', '重量(kg)': '75', '力臂(mm )': '6900', '力矩(kg*mm)': '517500', '重心': ''},
+    #             '试飞工程师A、B ':
+    #                 {'说明/备注': '2×75 kg', '重量(kg)': '150', '力臂(mm )': '21442', '力矩(kg*mm)': '3216270', '重心': ''},
+    #             '试飞工程师C':
+    #                 {'说明/备注': '75 kg', '重量(kg)': '75', '力臂(mm )': '21459', '力矩(kg*mm)': '1609448', '重心': ''},
+    #             '机组行李':
+    #                 {'说明/备注': '', '重量(kg)': '60', '力臂(mm )': '8417', '力矩(kg*mm)': '505020', '重心': ''}
+    #             }
     records5 = {'使用空重(OEW)':
                     {'说明/备注': '', '重量(kg)': '46859', '力臂(mm )': '20513', '力矩(kg*mm)': '961238854', '重心': '15.8'},
                 '驾驶员':

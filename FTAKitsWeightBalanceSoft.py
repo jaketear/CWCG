@@ -82,6 +82,8 @@ class MainWindow(QMainWindow):
         # 提交使用项目时重量重心结果也改变
         self.page_use_item.btn_submit.clicked.connect(self.use_item_changed)
 
+        # 保存重量平衡表
+
         self.translate()
 
         # 设置启动时显示的机型信息界面
@@ -129,15 +131,15 @@ class MainWindow(QMainWindow):
 if __name__ == '__main__':
     sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
     app = QApplication(sys.argv)
-    w = MainWindow()
-    w.show()
-    sys.exit(app.exec_())
+    # w = MainWindow()
+    # w.show()
+    # sys.exit(app.exec_())
     # 先弹出登录界面
-    # login_dialog = LoginDialog()
-    # result = login_dialog.exec_()
-    # if result == QDialog.Accepted:
-    #     w = MainWindow()
-    #     w.show()
-    #     sys.exit(app.exec_())
-    # else:
-    #     sys.exit(0)
+    login_dialog = LoginDialog()
+    result = login_dialog.exec_()
+    if result == QDialog.Accepted:
+        w = MainWindow()
+        w.show()
+        sys.exit(app.exec_())
+    else:
+        sys.exit(0)
